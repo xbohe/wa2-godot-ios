@@ -1,0 +1,34 @@
+# Godot 4+ specific ignores
+/git
+.godot/
+.DS_Store
+*.old
+/android/
+*.pak
+*.PAK
+# /assets/
+.VSCodeCounter/
+.vscode/
+.qodo/
+*.apk
+*.uid
+.qodo
+*.ogg
+*.WAV
+*.wav
+*.mp4
+*.ogv
+.vs/
+/sav/
+/assets/grp
+/assets/movie
+/assets/se
+/assets/IC
+/assets/fonts/cn
+/assets/fonts/jp
+/assets/fonts/fzzyjt.ttf
+/assets/fonts/fzzyjt.ttf.import
+# !assets/font.map
+# !assets/fonts/number.tres
+# !assets/ani
+# !assets/sub.yaml

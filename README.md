@@ -1,27 +1,110 @@
-本项目移植自dorakyuraduang/wa2-godot
-（https://github.com/dorakyuraduang/wa2-godot）
-目前项目移植自wa2-godot 0.18版本，已知缺少天气特效，且存在语音对话bug
-本项目已在以下机型及系统上进行少量功能调试（精力有限敬请谅解）：
-iPhone 13 mini (iOS 17.6.1)
-iPad Air 6 (M2) (iPadOS 18.5)
-目前主线剧情推进暂时没有发现严重bug
+# wa2-godot-iOS
 
-游戏安装方法(由于iOS系统封闭性强，所以安装过程较为复杂)
-（PS：因为iOS设备用爱思助手挺方便的，所以这里的教程基本上都是用爱思助手（不是在打广告）
-  如果各位有别的工具进行自签和文件传输的话请自行选择）  
-1.下载.ipa文件
-2.将iPhone/iPad连接电脑
-3.电脑下载爱思助手，使用爱思助手对ipa文件进行自签
-（教程参考：https://pc.i4.cn/news_detail_38195.html，使用 Apple ID 签名方法） 
-4.在爱思助手中打开我的设备→应用→导入安装，然后选择自签好的ipa文件进行安装
-（如果安装时失败，尝试开启开发者模式：https://jingyan.baidu.com/article/5bbb5a1b98f3f152eaa17975.html；
-  如果安装后弹窗显示未受信任的开发者，是正常现象，直接点取消，然后按下述教程信任即可：
-  https://pc.i4.cn/news_detail_27929.html）
-5.安装完成后先打开游戏（必须先打开游戏，否则下一步的游戏文件夹无法访问）
-6.把pc版的所有除了mv开头.pak后缀文件传输到游戏应用文件夹的Wa2Res文件夹下
-7、如果需要播放视频，请使用ogv格式的视频，将视频文件放置在游戏应用文件夹的Wa2Res/movie下
-(6、7两步也可以使用爱思助手完成，参照这个教程：https://zhuanlan.zhihu.com/p/524725414
-  但是在爱思助手电脑端选择应用文件夹时直接选择White Album 2，不用选择爱思助手极速版
-  项目原作者给出了PS3版ogv视频的分享地址，这里借用一下：
-  pan.baidu.com/s/1UTSgchekEH0PVtM7yck94w 密码 qjqa)
-8.游戏存档文件存放在游戏应用文件夹的sav文件夹里，与原项目0.18版本的存档文件兼容
+本项目移植自 [dorakyuraduang/wa2-godot](https://github.com/dorakyuraduang/wa2-godot)。
+
+当前项目基于 `wa2-godot 0.1.8` 版本进行 iOS 移植与适配。
+
+## 当前状态
+
+目前已知仍存在以下问题：
+
+- 缺少天气特效；
+- 存在语音对话相关 bug；
+- 部分功能尚未经过完整测试。
+
+本项目目前仅在以下设备和系统版本上进行了少量功能调试：
+
+- iPhone 13 mini，iOS 17.6.1
+- iPad Air 6，M2，iPadOS 18.5
+
+目前主线剧情暂未发现严重bug。由于测试设备和作者精力有限，其他设备、系统版本或剧情分支内容可能仍存在未发现的问题。
+
+## 安装方法
+
+由于 iOS 系统限制较多，安装和资源导入流程相对复杂。
+
+以下步骤以爱思助手为例进行说明，也可使用其他自签或文件传输工具。
+
+### 1. 安装 IPA
+
+1. 下载本项目提供的 `.ipa` 文件。
+2. 将 iPhone 或 iPad 连接到电脑。
+3. 在电脑上安装并打开爱思助手。
+4. 使用爱思助手对 `.ipa` 文件进行自签。
+
+   参考教程：[爱思助手 Apple ID 签名教程](https://pc.i4.cn/news_detail_38195.html)
+
+5. 在爱思助手中打开：
+
+   ```text
+   我的设备 → 应用 → 导入安装
+   ```
+
+   然后选择已经自签完成的 `.ipa` 文件进行安装。
+
+如果安装失败，可以尝试开启 iOS 开发者模式：
+
+[开启开发者模式参考教程](https://jingyan.baidu.com/article/5bbb5a1b98f3f152eaa17975.html)
+
+如果安装后提示“未受信任的开发者”，这是正常现象。请取消弹窗，然后手动信任开发者证书：
+
+[信任开发者证书参考教程](https://pc.i4.cn/news_detail_27929.html)
+
+### 2. 初始化游戏文件夹
+
+安装完成后，请先打开一次游戏。
+
+这一步是必须的。游戏首次启动后会在应用文件共享目录中自动创建资源文件夹，否则下一步无法访问对应目录。
+
+### 3. 导入游戏资源
+
+打开应用文件夹后，将 PC 版游戏资源复制到以下目录：
+
+```text
+White Album 2/Wa2Res/
+```
+
+需要复制的内容为：
+
+```text
+除 mv 开头以外的所有 .pak 文件
+```
+
+也就是说，PC 版中的主要 `.pak` 资源文件需要放入 `Wa2Res` 目录。
+
+### 4. 导入视频文件，可选
+
+如果需要播放游戏内视频，请准备 `ogv` 格式的视频文件，并放入：
+
+```text
+White Album 2/Wa2Res/movie/
+```
+
+视频文件缺失不会阻止游戏运行，但对应的视频播放内容会被跳过。
+
+请自行从合法持有的游戏资源中准备所需视频文件。本项目不提供任何原游戏资源、视频、音频或其他版权内容。
+
+### 5. 存档位置
+
+游戏存档文件位于：
+
+```text
+White Album 2/sav/
+```
+
+该存档目录与原项目 `wa2-godot 0.1.8` 版本的存档格式兼容。
+
+### 6. 文件存放示例
+
+打开 iPhone 或 iPad 系统自带的 文件 应用，打开：
+
+```text
+   浏览 → 我的iPhone/我的iPad → White Album 2
+   ```
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/69bf1bc8-a06c-4f3f-8f4b-f138378634c1" width="220" alt="打开 White Album 2 文件夹" />
+  <img src="https://github.com/user-attachments/assets/2a4abda7-94bf-4c54-a4ed-6b8e6386f402" width="220" alt="Wa2Res 文件夹示例" />
+  <img src="https://github.com/user-attachments/assets/dd2a693b-15c1-4a3f-8884-c30b0790c83b" width="220" alt="movie 文件夹示例" />
+</p>
+
+

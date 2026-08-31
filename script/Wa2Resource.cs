@@ -297,7 +297,7 @@ public class Wa2Resource
 		}
 		Image image = new();
 		image.LoadBmpFromBuffer(buffer);
-		image.Convert(Image.Format.Rgb8);
+		image.Convert(Image.Format.Rgba8);
 		return CacheImage(path, image);
 	}
 	public static AudioStream GetWavStream(string path)

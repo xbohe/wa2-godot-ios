@@ -1139,12 +1139,10 @@ public void ClickAdv(bool click = false)
 		BgInfo.Type = type;
 		AnimatorMgr.FinishAll(true);
 		Texture2D NextTexture;
-		Texture2D CeacheTexture = ImageTexture.CreateFromImage(Viewport.GetTexture().GetImage());
 		Wa2Image targetTexture;
 		if (updateChar)
 		{
 			targetTexture = BgTexture;
-			// UpdateWeatherIndex();
 		}
 		else
 		{
@@ -1186,7 +1184,6 @@ public void ClickAdv(bool click = false)
 
 		if (!updateChar)
 		{
-			// MaskTexture.SetCurTexture(CeacheTexture);
 			MaskTexture.SetCurOffset(Vector2.Zero);
 			MaskTexture.SetCurScale(Vector2.One);
 			MaskTexture.SetNextOffset(BgInfo.Offset);
@@ -1596,7 +1593,7 @@ public void ClickAdv(bool click = false)
 	}
 	public void SetWeatherSpeedY(int val)
 	{
-		WeatherInfo.SpeedX = val;
+		WeatherInfo.SpeedY = val;
 		if (WeatherParticles.ProcessMaterial != null && WeatherParticles.ProcessMaterial is ShaderMaterial)
 		{
 			(WeatherParticles.ProcessMaterial as ShaderMaterial).SetShaderParameter("speed_y", val);

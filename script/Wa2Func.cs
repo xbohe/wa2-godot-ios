@@ -342,7 +342,6 @@ public class Wa2Func
 
 		// _engine.AnimatorMgr.FinishAll(true);
 		// Texture2D NextTexture;
-		// Texture2D CeacheTexture = ImageTexture.CreateFromImage(_engine.Viewport.GetTexture().GetImage());
 		// if (args[1].Get() >= 0)
 		// {
 		// 	_engine.BgInfo.Path = string.Format("B{0:D4}{1:D1}{2:D1}.tga", args[1].Get(), args[2].Get(), _engine.TimeMode);
@@ -372,7 +371,6 @@ public class Wa2Func
 		// }
 		// _engine.MaskTexture.SetCurOffset(Vector2.Zero);
 		// _engine.MaskTexture.SetCurScale(Vector2.One);
-		// _engine.MaskTexture.SetCurTexture(CeacheTexture);
 		// _engine.MaskTexture.SetNextScale(new Vector2(1, 1));
 		// _engine.MaskTexture.SetNextOffset(new Vector2(0, 0));
 		// _engine.MaskTexture.SetNextTexture(NextTexture);
@@ -388,7 +386,6 @@ public class Wa2Func
 		return false;
 		// _engine.AnimatorMgr.FinishAll(true);
 		// Texture2D NextTexture;
-		// Texture2D CeacheTexture = _engine.BgTexture.GetCurTexture();
 		// if (args[1].Get() >= 0)
 		// {
 		// 	_engine.BgInfo.Path = string.Format("B{0:D4}{1:D1}{2:D1}.tga", args[1].Get(), args[2].Get(), _engine.TimeMode);
@@ -396,9 +393,7 @@ public class Wa2Func
 		// }
 		// else
 		// {
-		// 	NextTexture = CeacheTexture;
 		// }
-		// _engine.BgTexture.SetCurTexture(CeacheTexture);
 		// _engine.BgTexture.SetNextTexture(NextTexture);
 		// _engine.BgTexture.SetMaskTexture(null);
 		// // Wa2ImageAnimator animator3 = new(_engine.BgTexture);
@@ -650,10 +645,6 @@ public class Wa2Func
 		if (args[2].GetInt() != -1000)
 		{
 			_engine.SetWeatherCount(args[2].GetInt());
-		}
-		if (args[3].GetInt() != -1000)
-		{
-
 		}
 		if (args[4].GetInt() != -1000)
 		{
@@ -1011,17 +1002,17 @@ public class Wa2Func
 	}
 	public bool StopSZR(List<Wa2Var> args)
 	{
-		GD.Print("stop_szr");
+		// GD.Print("stop_szr");
 		return false;
 	}
 	public bool VA(List<Wa2Var> args)
 	{
-		GD.Print("va");
+		// GD.Print("va");
 		return false;
 	}
 	public bool CS(List<Wa2Var> args)
 	{
-		GD.Print("cs");
+		// GD.Print("cs");
 		return false;
 	}
 	public bool CM(List<Wa2Var> args)
@@ -1079,7 +1070,6 @@ public class Wa2Func
 		return false;
 		// _engine.AnimatorMgr.FinishAll(true);
 		// Texture2D NextTexture;
-		// Texture2D CeacheTexture = ImageTexture.CreateFromImage(_engine.Viewport.GetTexture().GetImage()); ;
 		// if (args[1].Get() >= 0)
 		// {
 		// 	_engine.BgInfo.Path = string.Format("B{0:D4}{1:D1}{2:D1}.tga", args[1].Get(), args[2].Get(), _engine.TimeMode);
@@ -1091,7 +1081,6 @@ public class Wa2Func
 		// }
 		// // _engine.MaskTexture.SetCurOffset(_engine.BgTexture.GetCurOffset());
 		// // _engine.MaskTexture.SetCurScale(_engine.BgTexture.GetCurScale());
-		// _engine.MaskTexture.SetCurTexture(CeacheTexture);
 		// _engine.MaskTexture.SetNextTexture(NextTexture);
 		// _engine.MaskTexture.SetMaskTexture(null);
 		// // Wa2ImageAnimator animator1 = new(_engine.MaskTexture);
@@ -1177,10 +1166,6 @@ public class Wa2Func
 		{
 			_engine.SetWeatherCount(args[2].GetInt());
 		}
-		if (args[3].GetInt() != -1000)
-		{
-
-		}
 		if (args[4].GetInt() != -1000)
 		{
 			_engine.SetWeatherIndex(args[4].GetInt());
@@ -1193,7 +1178,6 @@ public class Wa2Func
 		{
 			_engine.AnimatorMgr.AddShakeAnimation(args[0].GetInt(), args[1].GetInt(), args[2].GetInt());
 		}
-		GD.Print("shake类型:", args[0].GetInt());
 		return false;
 	}
 	public bool M2(List<Wa2Var> args)
@@ -1245,7 +1229,7 @@ public class Wa2Func
 	public bool SCall(List<Wa2Var> args)
 	{
 		_engine.Reset(false);
-		GD.Print("调用脚本", args[0].GetInt());
+		GD.Print("调用脚本", args[0].GetString());
 		_engine.ScriptStack.Push(new(args[0].GetString(), args[1].GetInt()));
 		_engine.Script = _engine.ScriptStack.Peek();
 		_engine.SetScriptIdx(_engine.Script.ScriptName);
@@ -1297,7 +1281,7 @@ public class Wa2Func
 	}
 	public bool Sin(List<Wa2Var> args)
 	{
-		var v = args[^1].GetInt() * (3.1415926f / 180.0f);
+		var v = args[^1].GetFloat() * (3.1415926f / 180.0f);
 		args.RemoveAt(args.Count - 1);
 		_engine.Script.PushFloat(5, 4, MathF.Sin(v));
 		return true;

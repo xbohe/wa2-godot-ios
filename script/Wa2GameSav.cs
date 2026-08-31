@@ -427,7 +427,7 @@ public class Wa2GameSav
 	}
 	public void LoadData(int idx)
 	{
-		GD.Print("位置", idx);
+		// GD.Print("位置", idx);
 		_engine.Reset();
 		FileAccess file = FileAccess.Open(_engine.SavPath + string.Format("sav{0:D2}.sav", idx), FileAccess.ModeFlags.Read);
 		file.Seek(0x1b000 + 32);
@@ -458,7 +458,7 @@ public class Wa2GameSav
 		}
 
 		int JumpEntryCount = (int)file.Get32();
-		GD.Print("跳转数量:", JumpEntryCount);
+		// GD.Print("跳转数量:", JumpEntryCount);
 		for (int i = 0; i < JumpEntryCount; i++)
 		{
 
@@ -489,7 +489,7 @@ public class Wa2GameSav
 		}
 
 		int charCount = (int)file.Get32();
-		GD.Print("角色数", charCount);
+		// GD.Print("角色数", charCount);
 		for (int i = 0; i < charCount; i++)
 		{
 
@@ -513,7 +513,7 @@ public class Wa2GameSav
 				V3 = (int)file.Get32()
 			});
 		}
-		GD.Print("日期位置", file.GetPosition());
+		// GD.Print("日期位置", file.GetPosition());
 
 		_engine.TimeMode = (int)file.Get32();
 		_engine.Label = (int)file.Get32();
@@ -811,7 +811,7 @@ public class Wa2GameSav
 		}
 
 		int JumpEntryCount = (int)file.Get32();
-		GD.Print("跳转数量:", JumpEntryCount);
+		// GD.Print("跳转数量:", JumpEntryCount);
 		for (int i = 0; i < JumpEntryCount; i++)
 		{
 

@@ -1,14 +1,14 @@
 [gd_scene load_steps=21 format=3 uid="uid://b7lnyub20p6ad"]
 
-[ext_resource type="PackedScene" uid="uid://bopft70o0x3ub" path="res://scene/BasePage.tscn" id="1_ydjvp"]
-[ext_resource type="Script" uid="uid://dmb0b2dwh45u3" path="res://script/VoiceMessageMenu.cs" id="2_isw0s"]
-[ext_resource type="Texture2D" uid="uid://bgp1om1c27mnn" path="res://assets/grp/sys_07100.png" id="2_w37f2"]
-[ext_resource type="Script" uid="uid://cfj5h2ne5rpx" path="res://script/Wa2Button.cs" id="3_w37f2"]
-[ext_resource type="Texture2D" uid="uid://bpaw1fwrusf1j" path="res://assets/grp/sys_07200.png" id="4_kd8g0"]
-[ext_resource type="AudioStream" uid="uid://dqvue5cndqhqh" path="res://assets/se/SE_9212.WAV" id="5_fysyc"]
-[ext_resource type="Texture2D" uid="uid://4uusw4tbqb0l" path="res://assets/grp/sys_07000.png" id="7_egs01"]
-[ext_resource type="Texture2D" uid="uid://c0y0oofk7801m" path="res://assets/grp/sys_07021.png" id="7_etmwe"]
-[ext_resource type="Texture2D" uid="uid://c8mw6bxrj1r4n" path="res://assets/grp/sys_07020.png" id="8_x1lt6"]
+[ext_resource type="PackedScene" path="res://scene/BasePage.tscn" id="1_ydjvp"]
+[ext_resource type="Script" path="res://script/VoiceMessageMenu.cs" id="2_isw0s"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_07100.png" id="2_w37f2"]
+[ext_resource type="Script" path="res://script/Wa2Button.cs" id="3_w37f2"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_07200.png" id="4_kd8g0"]
+[ext_resource type="AudioStream" path="res://assets/se/SE_9212.WAV" id="5_fysyc"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_07000.png" id="7_egs01"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_07021.png" id="7_etmwe"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_07020.png" id="8_x1lt6"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_egs01"]
 atlas = ExtResource("2_w37f2")

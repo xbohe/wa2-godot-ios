@@ -68,12 +68,35 @@ public partial class Wa2Label : Node2D
 	// public string EllipsisChar = "…";
 	[Export]
 	public Color ShadowColor = new Color(0, 0, 0, 0.9f); // 阴影颜色
-																											 // [Export]
-																											 // public int ShadowSize = 8; // 阴影大小
+														 // [Export]
+														 // public int ShadowSize = 8; // 阴影大小
 
 	public int Segment = 0;
 	public int ProgressStep = 0;
 	private List<CharRenderData> _renderDatas = new();
+	// iOS 适配：字体图集（本体80.png）是上游未提交的本地资产，仓库内仅有源 TTF。
+	// 图集缺失时回退到 TTF 渲染，避免 DrawChar 因空图集而无效/崩溃，且无需外部素材。
+	private static FontFile _ttfFont;
+	public override void _Ready()
+	{
+		if (Wa2EngineMain.Engine.Lang == Wa2EngineMain.Language.JP)
+		{
+			
+			FontTexture = ResourceLoader.Load<Texture2D>("res://assets/fonts/jp/本体80.png");
+			ShadowTexture = ResourceLoader.Load<Texture2D>("res://assets/fonts/jp/袋影80.png");
+		}
+		else
+		{
+			FontTexture = ResourceLoader.Load<Texture2D>("res://assets/fonts/cn/本体80.png");
+			ShadowTexture = ResourceLoader.Load<Texture2D>("res://assets/fonts/cn/袋影80.png");
+		}
+		// 图集缺失（上游未提交的本地资产）→ 回退到仓库内源 TTF（AlibabaPuHuiTi）
+		if (FontTexture == null)
+		{
+			_ttfFont = ResourceLoader.Load<FontFile>("res://assets/fonts/AlibabaPuHuiTi-3-65-Medium.ttf");
+		}
+	}
+
 	public override void _Draw()
 	{
 		foreach (CharRenderData r in _renderDatas)
@@ -103,7 +126,6 @@ public partial class Wa2Label : Node2D
 		int drawY = 0;
 		int lastDrawX = 0;
 		TextParseResult r = new();
-		bool wrapHold = false;
 		// int drawX = 0;
 		// int drawY = 0;
 		for (int i = 0; i < Text.Length; i++)
@@ -453,7 +475,7 @@ public partial class Wa2Label : Node2D
 		}
 		else
 		{
-			r.EndPosition = new Vector2(lastDrawX+FontSize, drawY - FontSize - ParagraphSpacing);
+			r.EndPosition = new Vector2(lastDrawX + FontSize, drawY - FontSize - ParagraphSpacing);
 
 		}
 
@@ -486,6 +508,20 @@ public partial class Wa2Label : Node2D
 		int pos = Wa2Def.FontMap[r.Chr];
 		if (pos >= 0)
 		{
+			// iOS 回退：字体图集缺失时用仓库内 TTF 渲染（源字体 AlibabaPuHuiTi）
+			if (FontTexture == null || ShadowTexture == null)
+			{
+				if (_ttfFont != null)
+				{
+					float baseline = r.Y + r.Size * 0.85f;
+					string ch = r.Chr.ToString();
+					if (Shadow)
+						DrawString(_ttfFont, new Vector2(r.X + r.Size * 0.06f, baseline + r.Size * 0.06f), ch, HorizontalAlignment.Left, -1, r.Size, new Color(ShadowColor.R, ShadowColor.G, ShadowColor.B, ShadowColor.A * r.Alpha));
+					DrawString(_ttfFont, new Vector2(r.X, baseline), ch, HorizontalAlignment.Left, -1, r.Size, new Color(Color.R, Color.G, Color.B, r.Alpha));
+				}
+				return;
+			}
+
 			int x = pos % 80;
 			int y = pos / 80;
 			Rect2 rect = new(new Vector2(r.X, r.Y), new Vector2(r.Size, r.Size));

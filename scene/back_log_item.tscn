@@ -1,11 +1,11 @@
 [gd_scene load_steps=10 format=3 uid="uid://b77hx1i001s2f"]
 
-[ext_resource type="Script" uid="uid://qsw3xkgywsql" path="res://script/Wa2Label.cs" id="1_c0jps"]
-[ext_resource type="Script" uid="uid://7jwo56a5wtu3" path="res://script/BackLogItem.cs" id="1_eg7q6"]
-[ext_resource type="Texture2D" uid="uid://cmgdubqht36c6" path="res://assets/fonts/cn/本体80.tga" id="3_cbnvi"]
-[ext_resource type="Script" uid="uid://cfj5h2ne5rpx" path="res://script/Wa2Button.cs" id="4_cbnvi"]
-[ext_resource type="Texture2D" uid="uid://kphqvd0w7amu" path="res://assets/fonts/cn/袋影80.tga" id="4_q4g71"]
-[ext_resource type="Texture2D" uid="uid://cqb0e3ecxesdg" path="res://assets/grp/sys_00031.png" id="5_cbnvi"]
+[ext_resource type="Script" path="res://script/Wa2Label.cs" id="1_c0jps"]
+[ext_resource type="Script" path="res://script/BackLogItem.cs" id="1_eg7q6"]
+[ext_resource type="Texture2D" path="res://assets/fonts/cn/本体80.png" id="3_cbnvi"]
+[ext_resource type="Script" path="res://script/Wa2Button.cs" id="4_cbnvi"]
+[ext_resource type="Texture2D" path="res://assets/fonts/cn/袋影80.png" id="4_q4g71"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00031.png" id="5_cbnvi"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_q4g71"]
 atlas = ExtResource("5_cbnvi")

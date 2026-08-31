@@ -1,30 +1,33 @@
-[gd_scene load_steps=46 format=3 uid="uid://bblla2fup6lge"]
+[gd_scene load_steps=49 format=3 uid="uid://bblla2fup6lge"]
 
-[ext_resource type="Script" uid="uid://cswf5gy4rp406" path="res://script/Wa2EngineMain.cs" id="1_wdeo5"]
-[ext_resource type="Script" uid="uid://ivqvvng438er" path="res://script/Wa2SoundMgr.cs" id="2_w3y5b"]
-[ext_resource type="Script" uid="uid://cxyvt2rcf4o7y" path="res://script/AnimatorMgr.cs" id="2_ycdy4"]
-[ext_resource type="Script" uid="uid://dddh4iks51722" path="res://script/Wa2Viewport.cs" id="3_0aff7"]
-[ext_resource type="PackedScene" uid="uid://8iltc13k4sm1" path="res://scene/AdvMain.tscn" id="3_ww1q6"]
-[ext_resource type="Script" uid="uid://drkkikgxv6ei5" path="res://script/SubtitleMgr.cs" id="4_074og"]
-[ext_resource type="Script" uid="uid://bquokb24gerlu" path="res://script/Wa2Image.cs" id="4_jqvt3"]
-[ext_resource type="Script" uid="uid://ceykik6d781hp" path="res://script/Wa2UiMgr.cs" id="4_p6nqb"]
-[ext_resource type="Shader" uid="uid://ca5ykqe88usbt" path="res://shader/mask.gdshader" id="5_3be8l"]
-[ext_resource type="PackedScene" uid="uid://b6u3qm7g3fnoj" path="res://scene/title_menu.tscn" id="5_d5jo3"]
-[ext_resource type="PackedScene" uid="uid://ikxlgfxd3sa7" path="res://scene/LoadSaveMenu.tscn" id="9_kek77"]
-[ext_resource type="PackedScene" uid="uid://djqgqhlm8ewbt" path="res://scene/CGModeMenu.tscn" id="10_efxa6"]
-[ext_resource type="PackedScene" uid="uid://kthxdrmqdyyc" path="res://scene/BgmModeMenu.tscn" id="11_dg77c"]
-[ext_resource type="PackedScene" uid="uid://85d6c6lepals" path="res://scene/BackLog.tscn" id="13_w48qg"]
-[ext_resource type="PackedScene" uid="uid://du2ied53oeq1x" path="res://scene/OptionsMenu.tscn" id="14_vivmo"]
-[ext_resource type="PackedScene" uid="uid://b8606yyc0k403" path="res://scene/UIConfirm.tscn" id="15_2cqfq"]
-[ext_resource type="PackedScene" uid="uid://d4mbvpx3le3ye" path="res://scene/Calender.tscn" id="17_cegan"]
-[ext_resource type="PackedScene" uid="uid://dh1x6736ft2sb" path="res://scene/NovelBackLogMenu.tscn" id="18_82xsv"]
-[ext_resource type="PackedScene" uid="uid://rteyiik8w6ct" path="res://scene/SceneReplayMenu.tscn" id="19_getpj"]
-[ext_resource type="PackedScene" uid="uid://b7lnyub20p6ad" path="res://scene/VoiceMessage.tscn" id="20_ryguw"]
-[ext_resource type="Texture2D" uid="uid://cnvrkuoaaixhk" path="res://assets/grp/sys_00100.png" id="23_lswn8"]
-[ext_resource type="Texture2D" uid="uid://d0qy7auhmaggc" path="res://assets/grp/sys_00101.png" id="24_a6jrf"]
-[ext_resource type="Script" uid="uid://we71cr6uf3ub" path="res://script/ErrorMessage.cs" id="24_xuqvo"]
-[ext_resource type="Script" uid="uid://dv44uqkip1kk0" path="res://script/Wa2Button.cs" id="25_xuqvo"]
-[ext_resource type="AudioStream" uid="uid://6gqqw0a071ht" path="res://assets/se/SE_8905.WAV" id="26_qsp4k"]
+[ext_resource type="Script" path="res://script/Wa2EngineMain.cs" id="1_wdeo5"]
+[ext_resource type="Script" path="res://script/Wa2SoundMgr.cs" id="2_w3y5b"]
+[ext_resource type="Script" path="res://script/AnimatorMgr.cs" id="2_ycdy4"]
+[ext_resource type="Script" path="res://script/Wa2Viewport.cs" id="3_0aff7"]
+[ext_resource type="PackedScene" path="res://scene/AdvMain.tscn" id="3_ww1q6"]
+[ext_resource type="Script" path="res://script/SubtitleMgr.cs" id="4_074og"]
+[ext_resource type="Script" path="res://script/Wa2Image.cs" id="4_jqvt3"]
+[ext_resource type="Script" path="res://script/Wa2UiMgr.cs" id="4_p6nqb"]
+[ext_resource type="Shader" path="res://shader/mask.gdshader" id="5_3be8l"]
+[ext_resource type="PackedScene" path="res://scene/title_menu.tscn" id="5_d5jo3"]
+[ext_resource type="Shader" path="res://shader/bg_mask.gdshader" id="6_a6jrf"]
+[ext_resource type="PackedScene" path="res://scene/LoadSaveMenu.tscn" id="9_kek77"]
+[ext_resource type="SpriteFrames" path="res://assets/ani/雨640x360.ani.tres" id="9_qsp4k"]
+[ext_resource type="PackedScene" path="res://scene/CGModeMenu.tscn" id="10_efxa6"]
+[ext_resource type="PackedScene" path="res://scene/BgmModeMenu.tscn" id="11_dg77c"]
+[ext_resource type="PackedScene" path="res://scene/BackLog.tscn" id="13_w48qg"]
+[ext_resource type="PackedScene" path="res://scene/OptionsMenu.tscn" id="14_vivmo"]
+[ext_resource type="PackedScene" path="res://scene/UIConfirm.tscn" id="15_2cqfq"]
+[ext_resource type="PackedScene" path="res://scene/Calender.tscn" id="17_cegan"]
+[ext_resource type="PackedScene" path="res://scene/NovelBackLogMenu.tscn" id="18_82xsv"]
+[ext_resource type="PackedScene" path="res://scene/SceneReplayMenu.tscn" id="19_getpj"]
+[ext_resource type="PackedScene" path="res://scene/VoiceMessage.tscn" id="20_ryguw"]
+[ext_resource type="FontFile" path="res://assets/fonts/AlibabaPuHuiTi-3-65-Medium.ttf" id="21_lswn8"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00100.png" id="23_lswn8"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00101.png" id="24_a6jrf"]
+[ext_resource type="Script" path="res://script/ErrorMessage.cs" id="24_xuqvo"]
+[ext_resource type="Script" path="res://script/Wa2Button.cs" id="25_xuqvo"]
+[ext_resource type="AudioStream" path="res://assets/se/SE_8905.WAV" id="26_qsp4k"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tw2vm"]
 resource_local_to_scene = true
@@ -172,9 +175,7 @@ shader_parameter/center = true
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_536a2"]
 resource_local_to_scene = true
-shader = ExtResource("5_3be8l")
-shader_parameter/cur_scale = Vector2(1, 1)
-shader_parameter/cur_offset = Vector2(0, 0)
+shader = ExtResource("6_a6jrf")
 shader_parameter/next_scale = Vector2(1, 1)
 shader_parameter/next_offset = Vector2(0, 0)
 shader_parameter/blend = 0.0
@@ -183,12 +184,14 @@ shader_parameter/canvas_size = Vector2(1280, 720)
 shader_parameter/center = false
 
 [sub_resource type="LabelSettings" id="LabelSettings_82xsv"]
+font = ExtResource("21_lswn8")
 font_size = 24
 outline_size = 4
 outline_color = Color(0, 0, 0, 1)
 shadow_size = 0
 
 [sub_resource type="LabelSettings" id="LabelSettings_kq58d"]
+font = ExtResource("21_lswn8")
 font_size = 18
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_seu75"]
@@ -209,7 +212,7 @@ load_path = "res://.godot/imported/sys_00101.png-7e696b97f0b37b53f28025965ba7f1c
 atlas = SubResource("CompressedTexture2D_e727q")
 region = Rect2(0, 40, 160, 40)
 
-[node name="EngineMain" type="Control" node_paths=PackedStringArray("BmpContainer", "AnimatorMgr", "SubtitleMgr", "ErrorMessage", "VideoPlayer", "CharGroup", "SubViewport", "Viewport", "AdvMain", "UiMgr", "SoundMgr", "BgTexture", "MaskTexture")]
+[node name="EngineMain" type="Control" node_paths=PackedStringArray("BmpContainer", "AnimatorMgr", "SubtitleMgr", "ErrorMessage", "Rain", "VideoPlayer", "CharGroup", "SubViewport", "Viewport", "AdvMain", "UiMgr", "SoundMgr", "BgTexture", "MaskTexture", "WeatherParticles")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -221,6 +224,7 @@ BmpContainer = NodePath("SubViewportContainer/SubViewport/BmpContainer")
 AnimatorMgr = NodePath("AnimatorMgr")
 SubtitleMgr = NodePath("SubtitleMgr")
 ErrorMessage = NodePath("ErrorMessage")
+Rain = NodePath("SubViewportContainer/SubViewport/Rain")
 VideoPlayer = NodePath("VideoStreamPlayer")
 CharGroup = NodePath("SubViewportContainer/SubViewport/CharGroup")
 SubViewport = NodePath("SubViewportContainer")
@@ -229,10 +233,12 @@ AdvMain = NodePath("Wa2UiMgr/AdvMain")
 UiMgr = NodePath("Wa2UiMgr")
 SoundMgr = NodePath("SoundMgr")
 BgTexture = NodePath("SubViewportContainer/SubViewport/Bg")
-MaskTexture = NodePath("MaskImage")
+MaskTexture = NodePath("SubViewportContainer/SubViewport/MaskImage")
+WeatherParticles = NodePath("SubViewportContainer/SubViewport/GPUParticles2D")
 
 [node name="AnimatorMgr" type="Node" parent="."]
 script = ExtResource("2_ycdy4")
+metadata/_custom_type_script = "uid://i2txg74b6v3t"
 
 [node name="SoundMgr" type="Node" parent="."]
 script = ExtResource("2_w3y5b")
@@ -253,7 +259,7 @@ mouse_filter = 2
 script = ExtResource("3_0aff7")
 BgTexure = NodePath("SubViewport/Bg")
 CharGroup = NodePath("SubViewport/CharGroup")
-RenderTexture = NodePath("../MaskImage")
+RenderTexture = NodePath("SubViewport/MaskImage")
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 handle_input_locally = false
@@ -268,8 +274,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("4_jqvt3")
+metadata/_custom_type_script = "uid://ch3fjcpjwskoj"
 
 [node name="CharGroup" type="Control" parent="SubViewportContainer/SubViewport"]
+z_index = 1
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -388,13 +396,12 @@ grow_vertical = 2
 script = ExtResource("4_jqvt3")
 
 [node name="BmpContainer" type="Control" parent="SubViewportContainer/SubViewport"]
-z_index = 999
 layout_mode = 3
 anchors_preset = 0
 
-[node name="MaskImage" type="ColorRect" parent="."]
+[node name="MaskImage" type="ColorRect" parent="SubViewportContainer/SubViewport"]
+z_index = 99
 material = SubResource("ShaderMaterial_536a2")
-layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -402,6 +409,21 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("4_jqvt3")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="SubViewportContainer/SubViewport"]
+emitting = false
+amount = 1
+fixed_fps = 60
+interpolate = false
+fract_delta = false
+
+[node name="Rain" type="AnimatedSprite2D" parent="SubViewportContainer/SubViewport"]
+visible = false
+position = Vector2(640, 360)
+scale = Vector2(2, 2)
+sprite_frames = ExtResource("9_qsp4k")
+animation = &"start"
+frame_progress = 0.8554668
 
 [node name="Wa2UiMgr" type="Control" parent="." node_paths=PackedStringArray("UICalender", "UIConfirm", "OptionsMenu", "BgmModeMenu", "AdvMain", "TitleMenu", "LoadSaveMenu", "CGModeMenu", "BackLogMenu", "NovelBackLogMenu", "SceneReplayMenu", "VoiceMessageMenu")]
 layout_mode = 1
@@ -572,3 +594,4 @@ texture_disabled = SubResource("AtlasTexture_seu75")
 texture_focused = SubResource("AtlasTexture_htxhm")
 script = ExtResource("25_xuqvo")
 ClickStream = ExtResource("26_qsp4k")
+metadata/_custom_type_script = "uid://cfj5h2ne5rpx"

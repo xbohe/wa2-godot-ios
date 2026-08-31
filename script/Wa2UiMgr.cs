@@ -53,10 +53,18 @@ public partial class Wa2UiMgr : Control
 	}
 	public void OpenGame()
 	{
-		_engine.SubViewport.Show();
-		_engine.State = Wa2EngineMain.GameState.GAME;
-		JumpScene(AdvMain);
-		AdvMain.Hide();
+		try
+		{
+			_engine.SubViewport.Show();
+			_engine.State = Wa2EngineMain.GameState.GAME;
+			JumpScene(AdvMain);
+			AdvMain.Hide();
+		}
+		catch (System.Exception e)
+		{
+			_engine.BootLog("OpenGame:CRASH: " + e);
+			_engine.OpenErrorMessage("进入游戏失败:\n" + e.Message);
+		}
 	}
 	public void ReturnScene()
 	{

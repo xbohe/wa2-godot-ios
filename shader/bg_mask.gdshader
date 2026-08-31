@@ -1,30 +1,18 @@
 shader_type canvas_item;
-uniform sampler2D cur_texture;
 uniform sampler2D mask_texture;
 uniform sampler2D next_texture;
-uniform vec2 cur_scale=vec2(1.0,1.0);
-uniform vec2 cur_offset=vec2(0.0,0.0);
 uniform vec2 next_scale=vec2(1.0,1.0);
 uniform vec2 next_offset=vec2(0.0,0.0);
 uniform float blend:hint_range(0.0, 1.0, 0.01)=0;
 uniform float fead_weight:hint_range(0,50)=1;
 uniform vec2 canvas_size=vec2(1280,720);
 uniform bool center=false;
-global uniform vec3 fb;
 varying vec2 cur_texture_size;
 varying vec2 mask_texture_size;
 varying vec2 next_texture_size;
 void vertex() {
-    // 获取纹理大小，Godot 返回 vec2
-    cur_texture_size = vec2(textureSize(cur_texture, 0));
 	mask_texture_size = vec2(textureSize(mask_texture, 0));
 	next_texture_size = vec2(textureSize(next_texture, 0));
-}
-vec4 fb_color(vec4 tex_color){
-    float bias = length(fb- vec3(0.5)) * 2.0;
-    vec3 target_color = vec3(step(0.5, fb));
-    vec3 final_color = mix(tex_color.rgb, target_color, clamp(bias*0.6, 0.0, 1.0));
-    return vec4(final_color, tex_color.a);
 }
 vec4 get_color(sampler2D input_texture,vec2 input_size,vec2 uv,vec2 scale,vec2 offset){
 	if(input_size==vec2(4,4)){
@@ -49,20 +37,11 @@ vec4 get_color(sampler2D input_texture,vec2 input_size,vec2 uv,vec2 scale,vec2 o
 }
 void fragment() {
 	vec4 mask_color=texture(mask_texture,UV);
-	vec4 cur_color=get_color(cur_texture,cur_texture_size,UV,cur_scale,cur_offset);
 	vec4 next_color=get_color(next_texture,next_texture_size,UV,next_scale,next_offset);
 	if (next_color.a==0.0){
 		next_color=vec4(0.0);
 	}
 	float result=(blend*2.0-(1.0-mask_color.r))*fead_weight;
 	float final=clamp(result,0.0,1.0);
-
-	if(cur_color.a==0.0){
-		COLOR=next_color*vec4(1.0,1.0,1.0,blend);
-	}else if(next_color.a==0.0){
-		COLOR=cur_color*vec4(1.0,1.0,1.0,1.0-blend);
-	}else{
-		COLOR=mix(cur_color,next_color,final);
-	}
-	COLOR=fb_color(COLOR);
+	COLOR=mix(vec4(0.0),next_color,final);
 }

@@ -1,10 +1,10 @@
 [gd_scene load_steps=20 format=3 uid="uid://d4mbvpx3le3ye"]
 
-[ext_resource type="Script" uid="uid://c6ei666pan6sw" path="res://script/UICalender.cs" id="1_misqx"]
-[ext_resource type="Texture2D" uid="uid://de2lw7fg77jay" path="res://assets/grp/calender_00.png" id="1_uanmy"]
-[ext_resource type="Texture2D" uid="uid://iumdnkc5pm3n" path="res://assets/grp/calender_11.png" id="2_6cohj"]
-[ext_resource type="Texture2D" uid="uid://blygana0p1tbl" path="res://assets/grp/catch_H.png" id="3_y4l8v"]
-[ext_resource type="Texture2D" uid="uid://7h86uhwjwn2l" path="res://assets/grp/catch_V.png" id="4_misqx"]
+[ext_resource type="Script" path="res://script/UICalender.cs" id="1_misqx"]
+[ext_resource type="Texture2D" path="res://assets/grp/calender_00.png" id="1_uanmy"]
+[ext_resource type="Texture2D" path="res://assets/grp/calender_11.png" id="2_6cohj"]
+[ext_resource type="Texture2D" path="res://assets/grp/catch_H.png" id="3_y4l8v"]
+[ext_resource type="Texture2D" path="res://assets/grp/catch_V.png" id="4_misqx"]
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_2brx7"]
 load_path = "res://.godot/imported/calender_10.png-d468cf38b1ed22f8fd70fb3dbd51b57d.ctex"

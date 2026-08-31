@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 // 0x110a0
 //A5F660
 // public struct ImageInfo
@@ -94,6 +95,16 @@ using System.Linq;
 // 	public byte[] First;
 // 	public byte[] Image;
 // }
+public class WeatherInfo
+{
+    public int Flag;
+	public int SpeedX;
+	public int SpeedY;
+	public int Thrbulence;
+	public int Count;
+	public int Flag2;
+	public int Index;
+}
 public struct Calender
 {
 	public int Year;
@@ -139,6 +150,20 @@ public struct CharItem
 	public int id;
 	public int no;
 }
+public class BmpInfo
+{
+	public int Id;
+	public int Type;
+	public string Path;
+	public float Scale;
+	public float OffsetX;
+	public float OffsetY;
+	public float PosX;
+	public float PosY;
+	public int Mode;
+	public int Layer;
+	public float Aplha;
+}
 public class VoiceInfo
 {
 	public int Chr;
@@ -170,6 +195,11 @@ public class SeInfo
 // }
 public class Wa2GameSav
 {
+	private const string BacklogExtensionMagic = "W2BL";
+	private const uint BacklogExtensionVersion = 1;
+	private const int MaxBacklogStringBytes = 64 * 1024;
+	private const int MaxBacklogEntries = 256;
+	private const int MaxVoiceInfosPerBacklog = 64;
 	// public string EffectMode="";
 	// public int TimeMode;
 	// public int Label=-1;
@@ -229,7 +259,7 @@ public class Wa2GameSav
 
 	public void SaveData(int idx)
 	{
-		FileAccess file = FileAccess.Open(_engine.SavPath+string.Format("sav{0:D2}.sav", idx), FileAccess.ModeFlags.Write);
+		FileAccess file = FileAccess.Open(_engine.SavPath + string.Format("sav{0:D2}.sav", idx), FileAccess.ModeFlags.Write);
 		DateTime SystemTime = DateTime.Now;
 		Image image = _engine.Viewport.GetTexture().GetImage();
 		image.Resize(256, 144);
@@ -310,7 +340,7 @@ public class Wa2GameSav
 
 		file.Store32((uint)_engine.TimeMode);
 		file.Store32((uint)_engine.Label);
-		file.Store32((uint)_engine.Weather);
+		file.Store32(0);
 		file.StoreBuffer([.. Encoding.Unicode.GetBytes(_engine.BgInfo.Path).Concat(new byte[32]).Take(32)]);
 		file.StoreFloat(_engine.BgInfo.Scale.X);
 		file.StoreFloat(_engine.BgInfo.Scale.Y);
@@ -354,13 +384,52 @@ public class Wa2GameSav
 			}
 		}
 		file.Store8((byte)(_engine.EroMode ? 1 : 0));
+		file.Store32((uint)_engine.BmpDict.Count);
+		foreach (int key in _engine.BmpDict.Keys)
+		{
+			file.Store32((uint)key);
+			Wa2Sprite sprite = _engine.BmpDict[key];
+			file.StoreBuffer([.. Encoding.Unicode.GetBytes(sprite.Path).Concat(new byte[32]).Take(32)]);
+			if (sprite is BmpAnime)
+			{
+				file.Store32(1);
+			}
+			else if (sprite is Wa2Sprite)
+			{
+				file.Store32(0);
+			}
+			file.StoreFloat(sprite.Scale.X);
+			file.StoreFloat(sprite.Offset.X);
+			file.StoreFloat(sprite.Offset.Y);
+			file.StoreFloat(sprite.Position.X);
+			file.StoreFloat(sprite.Position.Y);
+			file.Store32((uint)sprite.Mode);
+			file.Store32((uint)sprite.ZIndex);
+			file.StoreFloat(sprite.Modulate.A);
+		}
+		if (_engine.WeatherInfo != null)
+        {
+            file.Store32(1);
+			file.Store32((uint)_engine.WeatherInfo.Flag);
+			file.Store32((uint)_engine.WeatherInfo.SpeedX);
+			file.Store32((uint)_engine.WeatherInfo.SpeedY);
+			file.Store32((uint)_engine.WeatherInfo.Thrbulence);
+			file.Store32((uint)_engine.WeatherInfo.Count);
+			file.Store32((uint)_engine.WeatherInfo.Flag2);
+			file.Store32((uint)_engine.WeatherInfo.Index);
+        }
+		else
+        {
+            file.Store32(0);
+        }
+		SaveBacklogs(file);
 		file.Close();
 	}
 	public void LoadData(int idx)
 	{
 		GD.Print("位置", idx);
 		_engine.Reset();
-		FileAccess file = FileAccess.Open(_engine.SavPath+string.Format("sav{0:D2}.sav", idx), FileAccess.ModeFlags.Read);
+		FileAccess file = FileAccess.Open(_engine.SavPath + string.Format("sav{0:D2}.sav", idx), FileAccess.ModeFlags.Read);
 		file.Seek(0x1b000 + 32);
 		_engine.GameFlags = new int[0x1d];
 		_engine.ScriptStack.Clear();
@@ -448,7 +517,7 @@ public class Wa2GameSav
 
 		_engine.TimeMode = (int)file.Get32();
 		_engine.Label = (int)file.Get32();
-		_engine.Weather = (int)file.Get32();
+		file.Get32();
 		_engine.BgInfo.Path = Encoding.Unicode.GetString(file.GetBuffer(32)).Replace("\0", "");
 		_engine.BgInfo.Scale.X = file.GetFloat();
 		_engine.BgInfo.Scale.Y = file.GetFloat();
@@ -497,6 +566,66 @@ public class Wa2GameSav
 		{
 			_engine.ShowSelectMessage();
 		}
+		int bmpCont = (int)file.Get32();
+		for (int i = 0; i < bmpCont; i++)
+		{
+			Wa2Sprite sprite;
+			int key = (int)file.Get32();
+			string path = Encoding.Unicode.GetString(file.GetBuffer(32)).Replace("\0", "");
+			int type = (int)file.Get32();
+			float scale = file.GetFloat();
+			float offsetX = file.GetFloat();
+			float offsetY = file.GetFloat();
+			float posX = file.GetFloat();
+			float poxY = file.GetFloat();
+			int mode = (int)file.Get32();
+			int layer = (int)file.Get32();
+			float aplha = file.GetFloat();
+			if (type == 0)
+			{
+				sprite = new Wa2Sprite();
+				sprite.Path = path;
+				if (path.EndsWith(".tga"))
+				{
+					sprite.Texture = Wa2Resource.LoadTgaImage(path);
+				}
+				else
+				{
+					sprite.Texture = Wa2Resource.LoadBmpImage(path);
+				}
+			}
+			else if (type == 1)
+			{
+				sprite = new BmpAnime(path);
+				(sprite as BmpAnime).SetFrameInfo(0);
+
+			}
+			else
+			{
+				continue;
+			}
+			sprite.Scale = new Vector2(scale, scale);
+			sprite.Offset = new Vector2(offsetX, offsetY);
+			sprite.Position = new Vector2(posX, poxY);
+			sprite.SetMode(mode);
+			sprite.ZIndex = layer;
+			sprite.Modulate = new Color(1, 1, 1, aplha);
+			_engine.BmpDict.Add(key, sprite);
+			_engine.BmpContainer.CallDeferred("add_child", sprite);
+		}
+		if (HasBytes(file, 4) && file.Get32() == 1 && HasBytes(file, 28))
+        {
+			int v1=(int)file.Get32();
+			int v2=(int)file.Get32();
+			int v3=(int)file.Get32();
+			int v4=(int)file.Get32();
+			int v5=(int)file.Get32();
+			int v6=(int)file.Get32();
+			int v7=(int)file.Get32();
+            _engine.SetWeather(v1,v2,v3,v4,v5,v6,v7);
+        }
+		_engine.Backlogs.Clear();
+		LoadBacklogs(file);
 		_engine.AdvMain.ShowText(false);
 		_engine.SoundMgr.PlayBgm(_engine.BgmInfo.Id, _engine.BgmInfo.Loop != 0, _engine.BgmInfo.Volume);
 		_engine.BgTexture.SetCurTexture(Wa2Resource.GetTgaImage(_engine.BgInfo.Path));
@@ -504,9 +633,129 @@ public class Wa2GameSav
 		_engine.BgTexture.SetCurOffset(_engine.BgInfo.Offset);
 		_engine.UpdateChar(0f);
 		_engine.HasReadMessage = true;
-		_engine.Backlogs.Clear();
 
 		file.Close();
+	}
+	private void SaveBacklogs(FileAccess file)
+	{
+		file.StoreBuffer(Encoding.ASCII.GetBytes(BacklogExtensionMagic));
+		file.Store32(BacklogExtensionVersion);
+		file.Store32((uint)_engine.Backlogs.Count);
+		foreach (BacklogEntry backlog in _engine.Backlogs)
+		{
+			SaveString(file, backlog.Name);
+			SaveString(file, backlog.Text);
+			file.Store32((uint)backlog.Segment);
+			file.Store32((uint)backlog.VoiceInfos.Count);
+			foreach (VoiceInfo voiceInfo in backlog.VoiceInfos)
+			{
+				file.Store32((uint)voiceInfo.Chr);
+				file.Store32((uint)voiceInfo.Id);
+				file.Store32((uint)voiceInfo.Label);
+				file.Store32((uint)voiceInfo.Volume);
+			}
+		}
+	}
+	private void LoadBacklogs(FileAccess file)
+	{
+		if (!HasBytes(file, 12))
+		{
+			return;
+		}
+		string magic = file.GetBuffer(4).GetStringFromAscii();
+		if (magic != BacklogExtensionMagic)
+		{
+			return;
+		}
+		uint version = file.Get32();
+		if (version != BacklogExtensionVersion)
+		{
+			return;
+		}
+		uint count = file.Get32();
+		if (count > MaxBacklogEntries)
+		{
+			return;
+		}
+
+		List<BacklogEntry> backlogs = new();
+		for (int i = 0; i < count; i++)
+		{
+			if (!LoadString(file, out string name) || !LoadString(file, out string text) || !LoadInt(file, out int segment) || !LoadInt(file, out int voiceCount))
+			{
+				return;
+			}
+			if (voiceCount < 0 || voiceCount > MaxVoiceInfosPerBacklog)
+			{
+				return;
+			}
+
+			BacklogEntry backlog = new()
+			{
+				Name = name,
+				Text = text,
+				Segment = segment
+			};
+			for (int k = 0; k < voiceCount; k++)
+			{
+				if (!LoadInt(file, out int chr) || !LoadInt(file, out int id) || !LoadInt(file, out int label) || !LoadInt(file, out int volume))
+				{
+					return;
+				}
+				backlog.VoiceInfos.Add(new VoiceInfo()
+				{
+					Chr = chr,
+					Id = id,
+					Label = label,
+					Volume = volume
+				});
+			}
+			backlogs.Add(backlog);
+		}
+
+		_engine.Backlogs.AddRange(backlogs);
+	}
+	private void SaveString(FileAccess file, string value)
+	{
+		byte[] bytes = Encoding.UTF8.GetBytes(value ?? "");
+		file.Store32((uint)bytes.Length);
+		if (bytes.Length > 0)
+		{
+			file.StoreBuffer(bytes);
+		}
+	}
+	private bool LoadString(FileAccess file, out string value)
+	{
+		value = "";
+		if (!HasBytes(file, 4))
+		{
+			return false;
+		}
+		uint length = file.Get32();
+		if (length > MaxBacklogStringBytes || !HasBytes(file, length))
+		{
+			return false;
+		}
+		if (length == 0)
+		{
+			return true;
+		}
+		value = Encoding.UTF8.GetString(file.GetBuffer((long)length));
+		return true;
+	}
+	private bool LoadInt(FileAccess file, out int value)
+	{
+		value = 0;
+		if (!HasBytes(file, 4))
+		{
+			return false;
+		}
+		value = (int)file.Get32();
+		return true;
+	}
+	private bool HasBytes(FileAccess file, ulong byteCount)
+	{
+		return file.GetPosition() + byteCount <= file.GetLength();
 	}
 	public void SaveScript(FileAccess file, Wa2Script script)
 	{

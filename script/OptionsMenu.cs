@@ -56,6 +56,10 @@ public partial class OptionsMenu : BasePage
   public Wa2Button EroVoiceYesBtn;
   [Export]
   public Wa2Button EroVoiceNoBtn;
+  [Export]
+  public Wa2Button LongPressSkipYesBtn;
+  [Export]
+  public Wa2Button LongPressSkipNoBtn;
 
   public override void Close()
   {
@@ -72,6 +76,8 @@ public partial class OptionsMenu : BasePage
     PageVoiceNoBtn.ButtonDown += () => _engine.Prefs.SetConfig("page_voice", 0);
     EroVoiceYesBtn.ButtonDown += () => _engine.Prefs.SetConfig("ero_voice", 1);
     EroVoiceNoBtn.ButtonDown += () => _engine.Prefs.SetConfig("ero_voice", 0);
+    LongPressSkipYesBtn.ButtonDown += () => _engine.Prefs.SetConfig("checkskip", 1);
+    LongPressSkipNoBtn.ButtonDown += () => _engine.Prefs.SetConfig("checkskip", 0);
     WindowAlphaBtnList.GetChild<Wa2Button>(0).ButtonDown += () => WindowAlphaBar.Value--;
     WindowAlphaBtnList.GetChild<Wa2Button>(1).ButtonDown += () => WindowAlphaBar.Value++;
     WindowAlphaVisBtnList.GetChild<Wa2Button>(0).ButtonDown += () => WindowAlphaVisBar.Value--;
@@ -239,6 +245,14 @@ public partial class OptionsMenu : BasePage
     else
     {
       EroVoiceNoBtn.ButtonPressed =  true;
+    }
+    if (_engine.Prefs.GetConfig("checkskip") == 1)
+    {
+      LongPressSkipYesBtn.ButtonPressed = true;
+    }
+    else
+    {
+      LongPressSkipNoBtn.ButtonPressed = true;
     }
   }
 

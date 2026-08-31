@@ -1,53 +1,44 @@
-[gd_scene load_steps=20 format=3 uid="uid://b8606yyc0k403"]
+[gd_scene load_steps=17 format=3 uid="uid://b8606yyc0k403"]
 
-[ext_resource type="Script" uid="uid://gp5glcollg5p" path="res://script/UIConfirm.cs" id="1_1ipbv"]
-[ext_resource type="Texture2D" uid="uid://drerrl4salxby" path="res://assets/grp/sys_00100.png" id="3_gqeii"]
-[ext_resource type="Texture2D" uid="uid://dr0gcwfsp0q0n" path="res://assets/grp/sys_00101.png" id="5_3g2g7"]
-[ext_resource type="Script" uid="uid://cfj5h2ne5rpx" path="res://script/Wa2Button.cs" id="6_xfnwm"]
-[ext_resource type="AudioStream" uid="uid://dyxtuvb8mcn5g" path="res://assets/se/SE_8905.WAV" id="7_1m5mo"]
-[ext_resource type="Texture2D" uid="uid://bcrxkfog6v6sa" path="res://assets/grp/sys_00110.png" id="8_dtqvg"]
-[ext_resource type="AudioStream" uid="uid://cj3qrdicoboyc" path="res://assets/se/SE_9015.WAV" id="8_yj3s7"]
+[ext_resource type="Script" path="res://script/UIConfirm.cs" id="1_1ipbv"]
+[ext_resource type="FontFile" path="res://assets/fonts/AlibabaPuHuiTi-3-65-Medium.ttf" id="3_dtqvg"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00100.png" id="3_gqeii"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00101.png" id="5_3g2g7"]
+[ext_resource type="Script" path="res://script/Wa2Button.cs" id="6_xfnwm"]
+[ext_resource type="AudioStream" path="res://assets/se/SE_8905.WAV" id="7_1m5mo"]
+[ext_resource type="Texture2D" path="res://assets/grp/sys_00110.png" id="8_dtqvg"]
+[ext_resource type="AudioStream" path="res://assets/se/SE_9015.WAV" id="8_yj3s7"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_gx5fx"]
+font = ExtResource("3_dtqvg")
 font_size = 18
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_xf07o"]
 atlas = ExtResource("5_3g2g7")
 region = Rect2(0, 0, 160, 40)
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_kslka"]
-load_path = "res://.godot/imported/sys_00101.png-7e696b97f0b37b53f28025965ba7f1ca.ctex"
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_x4vs5"]
-atlas = SubResource("CompressedTexture2D_kslka")
+atlas = ExtResource("5_3g2g7")
 region = Rect2(0, 80, 160, 40)
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_e727q"]
-load_path = "res://.godot/imported/sys_00101.png-7e696b97f0b37b53f28025965ba7f1ca.ctex"
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_l7qad"]
-atlas = SubResource("CompressedTexture2D_e727q")
+atlas = ExtResource("5_3g2g7")
 region = Rect2(0, 40, 160, 40)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_455ds"]
 atlas = ExtResource("5_3g2g7")
 region = Rect2(160, 0, 160, 40)
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_4g5eb"]
-load_path = "res://.godot/imported/sys_00101.png-7e696b97f0b37b53f28025965ba7f1ca.ctex"
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_a1nol"]
-atlas = SubResource("CompressedTexture2D_4g5eb")
+atlas = ExtResource("5_3g2g7")
 region = Rect2(160, 80, 160, 40)
 
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_fwtsg"]
-load_path = "res://.godot/imported/sys_00101.png-7e696b97f0b37b53f28025965ba7f1ca.ctex"
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_g4wjj"]
-atlas = SubResource("CompressedTexture2D_fwtsg")
+atlas = ExtResource("5_3g2g7")
 region = Rect2(160, 40, 160, 40)
 
 [sub_resource type="LabelSettings" id="LabelSettings_2s8dg"]
+font = ExtResource("3_dtqvg")
 font_size = 18
 
 [node name="UIConfirm" type="Control" node_paths=PackedStringArray("ConfirmBtn", "CancelBtn", "ConfirmLabel", "ConfirmMessage", "TipMessage", "TipLabel")]

@@ -126,7 +126,7 @@ public partial class AnimatorMgr : Node
       image.SetBlend(0);
     }));
   }
-  public void AddMaskFeadAnimation(Wa2Image image, float time, bool mask = true)
+  public void AddMaskFeadAnimation(Wa2Image image, Wa2Image bgTexture, BgInfo bgInfo, float time)
   {
     Tween tween = CreateTween();
     Animator animator = new(tween, time);
@@ -146,17 +146,14 @@ public partial class AnimatorMgr : Node
     // tween.TweenCallback(Callable.From(() => image.SetNextTexture(null)));
     tween.TweenCallback(Callable.From(() =>
     {
-      if (mask)
-      {
-        image.Hide();
-        image.SetCurTexture(null);
-      }
-      else
-      {
-        image.SetCurTexture(image.GetNextTexture());
-      }
+      image.Hide();
+      bgTexture.SetCurOffset(bgInfo.Offset);
+      bgTexture.SetCurScale(bgInfo.Scale);
+      bgTexture.SetCurTexture(image.GetNextTexture());
+      image.SetCurTexture(null);
       image.SetNextTexture(null);
       image.SetBlend(0);
+      _engine.UpdateWeatherIndex();
     }));
     // tween.TweenCallback(Callable.From(() => image.SetMaskTexture(null))).SetDelay(time);
     // 				Image.SetCurTexture(Image.GetNextTexture());
@@ -221,7 +218,7 @@ public partial class AnimatorMgr : Node
   }
   public void AddShakeAnimation(int type, int strength, int frame)
   {
-    if (type != 9 && type != 1)
+    if (type != 9 && type != 1 && type != 0x201)
     {
       return;
     }
@@ -271,6 +268,15 @@ public partial class AnimatorMgr : Node
           }
           tween.TweenProperty(_engine.SubViewport, "position", offset, _engine.FrameTime);
           tween.TweenProperty(_engine.SubViewport, "position", new Vector2(0, 0), _engine.FrameTime);
+        }
+        break;
+      case 0x201:
+        int xDir = -1;
+        for (int i = 0; i < frame / 2; i++)
+        {
+          tween.TweenProperty(_engine.SubViewport, "position:x", xDir * strength, _engine.FrameTime);
+          tween.TweenProperty(_engine.SubViewport, "position", new Vector2(0, 0), _engine.FrameTime);
+          xDir *= -1;
         }
         break;
     }

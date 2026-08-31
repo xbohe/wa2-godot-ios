@@ -1,0 +1,245 @@
+name: Build iOS IPA (unsigned)
+
+# 在 GitHub 提供的 macOS runner 上导出未签名 IPA。
+# 产物需要用爱思助手 / Sideloadly 等工具，用免费 Apple ID 自签后安装。
+#
+# 触发方式：Actions 页面 → Build iOS IPA (unsigned) → Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: "导出模式（debug 保留调试信息，体积更大）"
+        required: false
+        default: debug
+        type: choice
+        options:
+          - debug
+          - release
+      assets_url:
+        description: "可选：游戏素材 zip 直链（留空则读取 secret WA2_ASSETS_URL）"
+        required: false
+        default: ""
+
+env:
+  GODOT_VERSION: 4.7.2
+  GODOT_RELEASE: 4.7.2-stable
+  EXPORT_PRESET: iOS
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  build:
+    # 必须与 Godot 官方构建 iOS 导出模板所用的 runner 保持一致（godotengine/godot 的
+    # .github/workflows/ios_builds.yml 用的是 macos-26）：4.7.2 的 libgodot.a 引入的
+    # metal_cpp 目标文件引用了 iOS 26 SDK 才有的 CADynamicRange* / MTLTensorDomain，
+    # 而 macos-15 默认 Xcode 16.4 只带 iPhoneOS18.5.sdk，链接期会报 undefined symbols。
+    # 注意：这是 SDK 版本问题，调 min_ios_version（部署目标）解决不了，已实证。
+    runs-on: macos-26
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v7
+
+      - name: 输出工具链版本
+        # iOS 链接失败时先看这里：Godot 模板引用的符号来自「SDK 版本」，不是部署目标
+        run: |
+          echo "Xcode : $(xcodebuild -version | tr '\n' ' ')"
+          echo "SDK   : $(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "DEVELOPER_DIR: $(xcode-select -p)"
+
+      - name: 安装 .NET 9 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: 安装 .NET iOS workload
+        run: dotnet workload install ios
+
+      - name: 缓存 Godot 编辑器与导出模板
+        id: cache-godot
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/godot-bin
+            ~/Library/Application Support/Godot/export_templates
+          key: godot-${{ env.GODOT_RELEASE }}-mono-macos-v1
+
+      - name: 下载 Godot ${{ env.GODOT_RELEASE }} (mono) 与导出模板
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/godotengine/godot/releases/download/${GODOT_RELEASE}"
+
+          mkdir -p "$HOME/godot-bin"
+          curl -fL --retry 3 -o /tmp/godot.zip \
+            "${BASE}/Godot_v${GODOT_RELEASE}_mono_macos.universal.zip"
+          unzip -q /tmp/godot.zip -d "$HOME/godot-bin"
+
+          curl -fL --retry 3 -o /tmp/templates.tpz \
+            "${BASE}/Godot_v${GODOT_RELEASE}_mono_export_templates.tpz"
+          unzip -q /tmp/templates.tpz -d /tmp/tpl
+          TPL_DIR="$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}.stable.mono"
+          mkdir -p "$TPL_DIR"
+          mv /tmp/tpl/templates/* "$TPL_DIR"/
+          ls "$TPL_DIR" | head -20
+
+      - name: 定位 Godot 可执行文件
+        run: |
+          set -euo pipefail
+          GODOT_BIN="$(find "$HOME/godot-bin" -maxdepth 4 -type f -name 'Godot*' -path '*/Contents/MacOS/*' | head -1)"
+          test -n "$GODOT_BIN" && chmod +x "$GODOT_BIN"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+          "$GODOT_BIN" --headless --version
+
+      - name: 注入游戏素材（可选）
+        env:
+          ASSETS_URL_INPUT: ${{ github.event.inputs.assets_url }}
+          ASSETS_URL_SECRET: ${{ secrets.WA2_ASSETS_URL }}
+          ASSETS_REPO: ${{ secrets.WA2_ASSETS_REPO }}
+          ASSETS_TOKEN: ${{ secrets.WA2_ASSETS_TOKEN }}
+          ASSETS_TAG: v1
+          ASSETS_FILE: ${{ secrets.WA2_ASSETS_FILE }}
+        run: |
+          set -euo pipefail
+          URL="${ASSETS_URL_INPUT:-}"
+          if [ -z "$URL" ]; then URL="${ASSETS_URL_SECRET:-}"; fi
+
+          # macOS 自带 unzip 对中文/日文文件名解码不良（写出失败 / 乱码），
+          # 改用 scripts/extract_assets.py（Python）正确还原 UTF-8 文件名。
+          if [ -d assets/grp ]; then
+            echo "::notice::仓库内已包含 assets/grp，直接使用"
+          elif [ -n "$URL" ]; then
+            curl -fL --retry 3 -o /tmp/assets.zip "$URL"
+            python3 scripts/extract_assets.py /tmp/assets.zip /tmp/assets-extract
+            if [ -d /tmp/assets-extract/assets ]; then
+              cp -R /tmp/assets-extract/assets/. assets/
+            else
+              cp -R /tmp/assets-extract/. assets/
+            fi
+            echo "::notice::已从 zip 注入游戏素材"
+          elif [ -n "$ASSETS_TOKEN" ] && [ -n "$ASSETS_REPO" ]; then
+            echo "::notice::从私有仓库下载 ${ASSETS_FILE}"
+            GH_TOKEN="$ASSETS_TOKEN" gh release download "$ASSETS_TAG" -R "$ASSETS_REPO" -p "$ASSETS_FILE" -D /tmp/assets-dl
+            python3 scripts/extract_assets.py "/tmp/assets-dl/$ASSETS_FILE" /tmp/assets-extract
+            if [ -d /tmp/assets-extract/assets ]; then
+              cp -R /tmp/assets-extract/assets/. assets/
+            else
+              cp -R /tmp/assets-extract/. assets/
+            fi
+            echo "::notice::已从私有仓库注入游戏素材"
+          else
+            echo "::warning::未提供游戏素材（assets/grp、assets/se、assets/fonts/cn 等）。构建仍会继续：中文已由仓库内 TTF 渲染，但背景/立绘/CG/视频等需安装后导入 Wa2Res/ 才会显示。"
+          fi
+          echo "--- assets 目录 ---"
+          ls -1 assets || true
+      - name: 导入项目资源
+        run: |
+          set -uo pipefail
+          # C# 项目首次导入需要生成 .godot 与 csproj glue，跑两次以确保导入完整
+          "$GODOT_BIN" --headless --path . --import || true
+          "$GODOT_BIN" --headless --path . --import || true
+          test -d .godot
+
+      - name: 编译 C# 程序集（提前暴露编译错误）
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
+            dotnet build wa2.sln -c ExportRelease -v minimal
+          else
+            dotnet build wa2.sln -c ExportDebug -v minimal
+          fi
+
+      - name: 导出 iOS Xcode 工程
+        # 让 Godot 内部调用的 xcodebuild 跳过签名（即便失败也不阻断，.xcodeproj 已生成）
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGN_IDENTITY: ""
+          DEVELOPMENT_TEAM: ""
+        run: |
+          set -euo pipefail
+          mkdir -p build/ios
+          if [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
+            EXPORT_FLAG=--export-release
+          else
+            EXPORT_FLAG=--export-debug
+          fi
+          # Godot 在写出 Xcode 工程后会自动调用 xcodebuild 做签名/归档。
+          # CI runner 没有 Apple 账号与 provisioning profile，该步预期会失败；
+          # 只要 Xcode 工程本身已生成，就由后续「xcodebuild 归档」步骤用关闭签名的方式打包。
+          if "$GODOT_BIN" --headless --path . "$EXPORT_FLAG" "$EXPORT_PRESET" "$PWD/build/ios/wa2.xcodeproj"; then
+            echo "Godot 导出（含 xcodebuild）成功"
+          else
+            echo "::warning::Godot 导出在 xcodebuild 签名阶段失败（预期：缺证书），继续用生成的 Xcode 工程手动打包"
+          fi
+          if [ ! -d "$PWD/build/ios/wa2.xcodeproj" ]; then
+            echo "::error::未生成 Xcode 工程，导出失败"
+            exit 1
+          fi
+          echo "--- 导出结果 ---"
+          ls -1 build/ios
+
+      - name: xcodebuild 归档（关闭签名）
+        run: |
+          set -euo pipefail
+          cd build/ios
+          PROJ="$(ls -d *.xcodeproj | head -1)"
+          SCHEME="$(xcodebuild -project "$PROJ" -list -json \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["project"]["schemes"][0])')"
+          echo "工程: $PROJ  scheme: $SCHEME"
+
+          if [ "${{ github.event.inputs.build_mode }}" = "release" ]; then
+            CONFIG=Release
+          else
+            CONFIG=Debug
+          fi
+
+          xcodebuild \
+            -project "$PROJ" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIG" \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/wa2.xcarchive" \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            ONLY_ACTIVE_ARCH=NO
+
+      - name: 打包未签名 IPA
+        run: |
+          set -euo pipefail
+          cd build/ios
+          APP="$(ls -d wa2.xcarchive/Products/Applications/*.app | head -1)"
+          echo "app: $APP"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          IPA="wa2-${{ github.event.inputs.build_mode }}-unsigned.ipa"
+          rm -f "$IPA"
+          zip -qry "$IPA" Payload
+          rm -rf Payload
+          ls -lh "$IPA"
+
+      - name: 上传 IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: wa2-ios-unsigned
+          path: build/ios/*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: 失败时输出导出目录结构
+        if: failure()
+        run: |
+          echo "--- build/ios ---"
+          ls -R build/ios 2>/dev/null | head -100 || echo "(无导出产物)"
+          echo "--- 导出模板 ---"
+          ls "$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}.stable.mono" 2>/dev/null | head -20 || true

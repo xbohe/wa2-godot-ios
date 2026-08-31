@@ -84,7 +84,15 @@ public class Wa2Encoding : Encoding
 
     public override int GetByteCount(char[] chars, int index, int count)
     {
-        return shiftJis.GetByteCount(chars, index, count) + (customCharToBytes.Count * 2);
+        // 必须与 GetBytes 的实际输出逐字符一致：只有真正命中自定义表的字符才占 2 字节。
+        // 原实现无条件加上 customCharToBytes.Count * 2（60 字节），会让调用方按此分配的
+        // 缓冲区尾部多出 60 个垃圾字节。
+        int byteCount = 0;
+        for (int i = index; i < index + count; i++)
+        {
+            byteCount += customCharToBytes.ContainsKey(chars[i]) ? 2 : shiftJis.GetByteCount(chars, i, 1);
+        }
+        return byteCount;
     }
 
     public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)

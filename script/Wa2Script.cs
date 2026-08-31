@@ -43,6 +43,58 @@ public class Wa2Var
 		};
 		return var;
 	}
+	// iOS（AOT，无 JIT）上 C# 的 dynamic 会走 DLR 表达式解释器，
+	// 二元运算绑定时会抛 NullReferenceException（典型栈：Microsoft.CSharp.RuntimeBinder
+	// .CSharpBinaryOperationBinder）。这里改为静态重载，彻底去掉 dynamic。
+	public void Set(int value)
+	{
+		if (CmdType == CmdType.GLOBAL_VAR)
+		{
+			Wa2EngineMain.Engine.GameFlags[IntValue] = value;
+		}
+		if (CmdType == CmdType.LOCAL_VAR)
+		{
+			if (IntValue >= 26)
+			{
+				Wa2EngineMain.Engine.Script.GloFloats[IntValue % 26] = value;
+			}
+			else
+			{
+				Wa2EngineMain.Engine.Script.GloInts[IntValue] = value;
+			}
+		}
+		if (CmdType == CmdType.VAR)
+		{
+			ValType = ValueType.INT;
+			IntValue = value;
+		}
+	}
+	public void Set(float value)
+	{
+		if (CmdType == CmdType.GLOBAL_VAR)
+		{
+			Wa2EngineMain.Engine.GameFlags[IntValue] = (int)value;
+		}
+		if (CmdType == CmdType.LOCAL_VAR)
+		{
+			if (IntValue >= 26)
+			{
+				Wa2EngineMain.Engine.Script.GloFloats[IntValue % 26] = value;
+			}
+			else
+			{
+				Wa2EngineMain.Engine.Script.GloInts[IntValue] = (int)value;
+			}
+		}
+		if (CmdType == CmdType.VAR)
+		{
+			ValType = ValueType.FLOAT;
+			FloatValue = value;
+		}
+	}
+	// 原 public dynamic Get() 已删除：iOS 是 AOT、没有 JIT，dynamic 会走 DLR 表达式解释器，
+	// 二元运算/转换绑定时会抛 NullReferenceException（栈里可见 Microsoft.CSharp.RuntimeBinder）。
+	// 全部调用点已改用下面三个静态类型访问器，删掉 Get() 以防止再写出新的 dynamic 站点。
 	public void SetInt(int value)
 	{
 		if (CmdType == CmdType.GLOBAL_VAR)
@@ -559,7 +611,35 @@ public class Wa2Script
 		// GD.Print(string.Format("调用函数{0:X}", funcIdx));
 		if (_engine.Func.FuncDic.TryGetValue(funcIdx, out var func))
 		{
-			return func(Args);
+			// 指令层此前完全没有异常防护：任何一条 opcode 抛异常都会沿 ParseCmd → _Process
+			// 冒泡出去直接终止进程，在 iOS 上就是「无日志闪退」。这里统一兜底：
+			// 写 boot.log + 弹错误框（与 _Ready / StartScript 的兜底行为一致）。
+			try
+			{
+				return func(Args);
+			}
+			catch (Exception e)
+			{
+				// 参数种类直接决定 dynamic 的运行时类型，崩溃时打出来便于定位（iOS 上的 DLR 崩溃尤其依赖这个）
+				string argInfo = "";
+				foreach (Wa2Var a in Args)
+				{
+					argInfo += $"[{a.CmdType}/{a.ValType}/{a.IntValue}]";
+				}
+				_engine.BootLog($"CallFunc 0x{funcIdx:X} args:{argInfo}");
+				_engine.BootLog($"CallFunc 0x{funcIdx:X} CRASH: {e}");
+				_engine.OpenErrorMessage($"脚本指令执行失败\n(0x{funcIdx:X}):\n{e.Message}");
+				// 清掉本次遗留的半条参数，避免污染后续指令
+				Args.Clear();
+				// 让当前脚本终止，否则下一帧会在同一位置重复执行这条失败指令、反复弹错。
+				// 多脚本时 ParseCmd 收尾会弹出脚本栈回到父脚本；只剩一个脚本时把读指针推到末尾令其自然结束。
+				Exit = true;
+				if (_engine.ScriptStack.Count <= 1)
+				{
+					ScriptPos = (uint)_bnrbuffer.Length;
+				}
+				return false;
+			}
 		}
 		return true;
 	}

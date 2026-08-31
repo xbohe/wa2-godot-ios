@@ -32,3 +32,9 @@
 # !assets/fonts/number.tres
 # !assets/ani
 # !assets/sub.yaml
+
+# Python 缓存
+__pycache__/
+# 原始游戏包(本地，不入库)
+*.rar
+*.apk

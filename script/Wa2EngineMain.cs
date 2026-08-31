@@ -1,8 +1,10 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 public class BacklogEntry
 {
 
@@ -13,6 +15,70 @@ public class BacklogEntry
 }
 public partial class Wa2EngineMain : Control
 {
+	public enum Language
+	{
+		CN,
+		JP,
+		EN
+	}
+	public enum GameState
+	{
+		NONE,
+		LOGO,
+		OP,
+		TITLE,
+		GAME,
+
+	}
+	[Export]
+	public Control BmpContainer;
+	[Export]
+	public AnimatorMgr AnimatorMgr;
+	// [Export]
+	// public int Mode;
+	// [Export]
+	// public TextureRect Texture;
+	// Called when the node enters the scene tree for the first time.
+	public Wa2GameSav GameSav;
+	[Export]
+	public SubtitleMgr SubtitleMgr;
+	[Export]
+	public ErrorMessage ErrorMessage;
+	[Export]
+	public AnimatedSprite2D Rain;
+	// public int CurSelect=0;
+
+	// public int[] GameFlags = new int[1024];
+	// public int _frame;
+	// public List<string> Texts = new();
+	public List<BacklogEntry> Backlogs = new();
+	public bool EroMode = false;
+	// public int BgType = 0;
+	public bool TestMode = true;
+	public bool SkipMode = false;
+	public bool SkipDisable = false;
+	public int ReplayMode = 0;
+	public bool AutoMode = false;
+	public bool NovelMode = false;
+	public bool ClickedInWait;
+	public int CurMessageIdx;
+	public static Wa2EngineMain Engine;
+	public Wa2Var SelectVar;
+	public double PressedTime = 0.0f;
+	public bool IsPressed = false;
+	public int SelectIdx = -1;
+	public int ScriptIdx;
+	public int Year;
+	public int Month;
+	public int Day;
+	public int TimeMode;
+	public int StartTime;
+	public bool WaitSe = false;
+	public Wa2Prefs Prefs;
+	public int Label;
+	public bool Skipping = false;
+	public bool DemoMode = false;
+	public string SavPath = "user://";
 	private static readonly string[] RequiredPakPaths =
 	{
 		"BGM.PAK",
@@ -48,65 +114,9 @@ public partial class Wa2EngineMain : Control
 		"movie/mv230.ogv",
 		"movie/mv240.ogv"
 	};
-
-	public enum GameState
-	{
-		NONE,
-		LOGO,
-		OP,
-		TITLE,
-		GAME,
-
-	}
-	[Export]
-	public Control BmpContainer;
-	[Export]
-	public AnimatorMgr AnimatorMgr;
-	// [Export]
-	// public int Mode;
-	// [Export]
-	// public TextureRect Texture;
-	// Called when the node enters the scene tree for the first time.
-	public Wa2GameSav GameSav;
-	[Export]
-	public SubtitleMgr SubtitleMgr;
-	[Export]
-	public ErrorMessage ErrorMessage;
-	// public int CurSelect=0;
-
-	// public int[] GameFlags = new int[1024];
-	// public int _frame;
-	// public List<string> Texts = new();
-	public List<BacklogEntry> Backlogs = new();
-	public bool EroMode = false;
-	// public int BgType = 0;
-	public bool TestMode = true;
-	public bool SkipMode = false;
-	public bool SkipDisable = false;
-	public int ReplayMode = 0;
-	public bool AutoMode = false;
-	public bool NovelMode = false;
-	public bool ClickedInWait;
-	public int CurMessageIdx;
-	public static Wa2EngineMain Engine;
-	public Wa2Var SelectVar;
-	public double PressedTime = 0.0f;
-	public bool IsPressed = false;
-	public int SelectIdx = -1;
-	public int ScriptIdx;
-	public int Year;
-	public int Month;
-	public int Day;
-	public int TimeMode;
-	public int StartTime;
-	public bool WaitSe = false;
-	public Wa2Prefs Prefs;
-	public int Label;
-	public bool Skipping = false;
-	public bool DemoMode = false;
-	public string SavPath="user://";
 	public bool ResourcesReady { get; private set; } = true;
 	private bool _iosMovieDirectoryWasMissing;
+	public Language Lang = Language.CN;
 
 	[Export]
 	public VideoStreamPlayer VideoPlayer;
@@ -127,6 +137,20 @@ public partial class Wa2EngineMain : Control
 	public Wa2Image BgTexture;
 	[Export]
 	public Wa2Image MaskTexture;
+	[Export]
+	public GpuParticles2D WeatherParticles;
+	public WeatherInfo WeatherInfo;
+	private readonly List<GpuParticles2D> ExtraWeatherParticles = new();
+	private readonly List<AtlasTexture> SakuraWeatherTextures = new();
+	private const float SakuraParticleTextureScale = 1.0f;
+	private const int SakuraParticleColumns = 12;
+	private const int SakuraParticleRows = 2;
+	private const int SakuraParticleFrameCount = SakuraParticleColumns * SakuraParticleRows;
+	private const float SakuraParticleFrameRate = 12.0f;
+	private const int SnowLargeLayerModeExcludeLarge = 1;
+	private const int SnowLargeLayerModeOnlyLarge = 2;
+	private double SakuraWeatherAnimationTime = 0.0;
+	private int SakuraWeatherFrame = -1;
 	public bool HasPlayMovie = false;
 	public GameState State = GameState.NONE;
 	public Wa2WaitTimer WaitTimer = new();
@@ -144,14 +168,17 @@ public partial class Wa2EngineMain : Control
 	public float ScriptFrameTime { private set; get; } = 1.0f / 30;
 	public Wa2Script Script;
 	public Stack<Wa2Script> ScriptStack = new();
+	// 脚本解析发生致命错误后置位，停止逐帧解析，避免同一个错误每帧弹一次框把 App 卡死。
+	// 每次 StartScript（换脚本/读档/重开）都会复位。
+	private bool _scriptParseFaulted = false;
 	public Wa2Func Func;
 	public Wa2Encoding Wa2Encoding;
 	public FileAccess SysSav;
-	public Dictionary<int, Sprite2D> BmpDict = new();
+	public Dictionary<int, Wa2Sprite> BmpDict = new();
 	public string EffectMode = "";
 	// public int TimeMode;
 	// public int Label=-1;
-	public int Weather;
+
 	public BgmInfo BgmInfo = new();
 	public BgInfo BgInfo = new();
 	public Color FBColor = new(0.5f, 0.5f, 0.5f, 1);
@@ -159,15 +186,58 @@ public partial class Wa2EngineMain : Control
 	public int[] GameFlags = new int[0x1d];
 	public double ScriptDelta = 0.0f;
 	public double FrameDelta = 0.0f;
+	// 1. 定义映射表（建议作为类成员，避免每次调用都重新创建）
+	private static readonly Dictionary<string, string> VideoPathMap = new Dictionary<string, string>
+{
+    // 根目录分类
+    { "mv00", "mv000.pak" }, { "mv10", "mv100.pak" }, { "mv11", "mv110.pak" },
+	{ "mv12", "mv120.pak" }, { "mv13", "mv130.pak" }, { "mv14", "mv140.pak" },
+	{ "mv20", "mv200.pak" }, { "mv21", "mv210.pak" }, { "mv22", "mv220.pak" },
+	{ "mv23", "mv230.pak" }, { "mv24", "mv240.pak" },
 
+    // IC 目录分类
+    { "mv01", "IC/mv010.pak" },
+	{ "mv02", "IC/mv020.pak" },
+    
+    // 特殊处理：物理文件名是大写的 MV
+    { "mv07", "IC/MV070.pak" },
+	{ "mv08", "IC/MV080.pak" },
+	{ "mv09", "IC/MV090.pak" }
+};
+
+	// 2. 使用方法（Android 走 pak 直解；iOS 播放 movie/*.ogv，未使用此映射）
+	public string GetVideoPath(string name)
+	{
+		if (string.IsNullOrEmpty(name)) return "";
+
+		// 统一转小写进行匹配，无论输入是 MV00 还是 mv00 都能找到
+		string key = name.ToLower();
+
+		if (VideoPathMap.TryGetValue(key, out string fileName))
+		{
+			return fileName;
+		}
+
+		return ""; // 如果没找到匹配项，返回空字符串
+	}
 
 	public Wa2EngineMain()
 	{
 		if (Engine == null)
 		{
 			Engine = this;
-			// Wa2Def.LoadSliceData("res://assets/fonts/cn/本体80.tga",Wa2Def.FontSliceData);
-			// Wa2Def.LoadSliceData("res://assets/fonts/cn/袋影80.tga",Wa2Def.FontShadowSliceData);
+			string[] args = OS.GetCmdlineArgs();
+			foreach (string arg in args)
+			{
+				if (arg == "jp")
+				{
+					Lang = Language.JP;
+					GD.Print("JP");
+				}
+			}
+
+			// Wa2Def.LoadSliceData("res://assets/fonts/cn/本体80.png",Wa2Def.FontSliceData);
+			// Wa2Def.LoadSliceData("res://assets/fonts/cn/袋影80.png",Wa2Def.FontShadowSliceData);
 		}
 	}
 	public void SetFBColor(Color color)
@@ -385,8 +455,8 @@ public partial class Wa2EngineMain : Control
 			{
 				if (!(ui as BasePage).AnimationPlayer.IsPlaying())
 				{
-					SoundMgr.PlaySysSe(ResourceLoader.Load<AudioStream>("res://assets/se/SE_9213.wav"));
-					(ui as BasePage).Close();
+				SoundMgr.PlaySysSe(ResourceLoader.Load<AudioStream>("res://assets/se/SE_9213.WAV"));
+				(ui as BasePage).Close();
 				}
 
 			}
@@ -397,18 +467,21 @@ public partial class Wa2EngineMain : Control
 					UiMgr.UIConfirm.Close();
 					UiMgr.OpenTitleMenu();
 				});
-				SoundMgr.PlaySysSe(ResourceLoader.Load<AudioStream>("res://assets/se/SE_9213.wav"));
+				SoundMgr.PlaySysSe(ResourceLoader.Load<AudioStream>("res://assets/se/SE_9213.WAV"));
 			}
 		}
 	}
 
 	public override void _Ready()
 	{
+		try
+		{
 		// GD.Print(FrameTime);
+		
 		GetTree().SetQuitOnGoBack(false);
+		BootLog("Ready:start OS=" + OS.GetName());
 		GameSav = new(this);
-		string platform = OS.GetName();
-		if (platform == "Android")
+		if (OS.GetName() == "Android")
 		{
 
 			for (int i = 0; i < 100; i++)
@@ -416,9 +489,9 @@ public partial class Wa2EngineMain : Control
 				if (System.IO.Directory.Exists(string.Format("/storage/emulated/{0}/Wa2Res/", i)))
 				{
 					Wa2Resource.ResPath = string.Format("/storage/emulated/{0}/Wa2Res/", i);
-					DirAccess dir=DirAccess.Open(Wa2Resource.ResPath );
+					DirAccess dir = DirAccess.Open(Wa2Resource.ResPath);
 					dir.MakeDir("sav");
-					SavPath=Wa2Resource.ResPath+"sav/";
+					SavPath = Wa2Resource.ResPath + "sav/";
 					break;
 				}
 			}
@@ -431,7 +504,7 @@ public partial class Wa2EngineMain : Control
 			// await ToSignal(GetTree(), SceneTree.SignalName.OnRequestPermissionsResult);
 			// }
 		}
-		else if (platform == "iOS")
+		else if (OS.GetName() == "iOS")
 		{
 			string resourceRoot = OS.GetUserDataDir().PathJoin("Wa2Res");
 			string icPath = resourceRoot.PathJoin("IC");
@@ -445,46 +518,33 @@ public partial class Wa2EngineMain : Control
 
 			Wa2Resource.ResPath = resourceRoot + "/";
 			SavPath = savePath + "/";
+			BootLog("Ready:ios dirs ResPath=" + Wa2Resource.ResPath);
 		}
 		else
 		{
 			Wa2Resource.ResPath = "res://assets/";
+			BootLog("Ready:else ResPath=" + Wa2Resource.ResPath);
 		}
-
+		}
+		catch (System.Exception e)
+		{
+			BootLog("Ready CRASH: " + e);
+			OpenErrorMessage("启动失败:\n" + e.Message);
+		}
 	}
-	private void ValidateIosMovies()
-	{
-		List<string> missingMovies = ExpectedMoviePaths
-			.Where(path => !FileAccess.FileExists(Wa2Resource.ResPath + path))
-			.Select(path => path.Substring("movie/".Length))
-			.ToList();
 
-		if (!_iosMovieDirectoryWasMissing && missingMovies.Count == 0)
-		{
-			return;
-		}
-
-		if (_iosMovieDirectoryWasMissing)
-		{
-			OpenErrorMessage("movie文件夹不存在,\n已自动创建，游戏仍可进入");
-		}
-		else if (missingMovies.Count > 0)
-		{
-			OpenErrorMessage($"MV缺失，游戏将自动跳过,\n文件{missingMovies[0]}不存在");
-		}
-
-	}
 	public void InitGame()
 	{
+
 		Prefs = new Wa2Prefs();
 		Prefs.Init(this);
-		if (!FileAccess.FileExists(SavPath+"sys.sav"))
+		if (!FileAccess.FileExists(SavPath + "sys.sav"))
 		{
-			SysSav = FileAccess.Open(SavPath+"sys.sav", FileAccess.ModeFlags.Write);
+			SysSav = FileAccess.Open(SavPath + "sys.sav", FileAccess.ModeFlags.Write);
 			SysSav.StoreBuffer(new byte[0x26A000]);
 			SysSav.Close();
 		}
-		SysSav = FileAccess.Open(SavPath+"sys.sav", FileAccess.ModeFlags.ReadWrite);
+		SysSav = FileAccess.Open(SavPath + "sys.sav", FileAccess.ModeFlags.ReadWrite);
 		SoundMgr.Init(this);
 		// if (SysSav.GetLength() < 0x26A000)
 		// {
@@ -497,7 +557,7 @@ public partial class Wa2EngineMain : Control
 		// Script = new Wa2Script(Func);
 		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		Wa2Encoding = new();
-		Wa2Def.LoadFontMap();
+				Wa2Def.LoadFontMap();
 
 		bool loadPaks = true;
 		if (OS.GetName() == "iOS")
@@ -517,7 +577,7 @@ public partial class Wa2EngineMain : Control
 				ValidateIosMovies();
 			}
 		}
-		else if (!DirAccess.DirExistsAbsolute(Wa2Resource.ResPath))
+		else if (!System.IO.Directory.Exists(ProjectSettings.GlobalizePath(Wa2Resource.ResPath)))
 		{
 			OpenErrorMessage("资源文件夹不存在,\n路径" + Wa2Resource.ResPath);
 			loadPaks = false;
@@ -537,11 +597,11 @@ public partial class Wa2EngineMain : Control
 		for (int i = 0; i < Wa2Def.CharPos.Length; i++)
 		{
 			// Chars[i]=new Wa2Image();
-			Chars[i] = CharGroup.GetChild(i) as Wa2Image;
+			Chars[i] = CharGroup.GetChild(Wa2Def.CharOrder[i]) as Wa2Image;
 			Chars[i].Size = new Vector2(1280, 720);
 			Chars[i].SetCurOffset(new Vector2(-Wa2Def.CharPos[i], 0));
 			Chars[i].SetNextOffset(new Vector2(-Wa2Def.CharPos[i], 0));
-			Chars[i].ZIndex = -Wa2Def.CharPos[i] + 720;
+			// Chars[i].ZIndex = -Wa2Def.CharPos[i] + 720;
 			Chars[i].SetCenter(true);
 			Chars[i].Hide();
 			// GD.Print(Chars[i].GetCurOffset());
@@ -553,7 +613,29 @@ public partial class Wa2EngineMain : Control
 		// GD.Print(Time.GetTicksMsec());
 		// GetTree().ChangeSceneToFile("res://scene/as/title_menu.tscn");
 	}
-	public void ClickAdv(bool click = false)
+		private void ValidateIosMovies()
+	{
+		List<string> missingMovies = ExpectedMoviePaths
+			.Where(path => !FileAccess.FileExists(Wa2Resource.ResPath + path))
+			.Select(path => path.Substring("movie/".Length))
+			.ToList();
+
+		if (!_iosMovieDirectoryWasMissing && missingMovies.Count == 0)
+		{
+			return;
+		}
+
+		if (_iosMovieDirectoryWasMissing)
+		{
+			OpenErrorMessage("movie文件夹不存在,\n已自动创建，游戏仍可进入");
+		}
+		else if (missingMovies.Count > 0)
+		{
+			OpenErrorMessage($"MV缺失，游戏将自动跳过,\n文件{missingMovies[0]}不存在");
+		}
+	}
+
+public void ClickAdv(bool click = false)
 	{
 		// if(WaitTime){
 		// 	return;
@@ -669,6 +751,16 @@ public partial class Wa2EngineMain : Control
 		AdvMain.Mask.Modulate = new Color(1, 1, 1, 1);
 		ScriptDelta = 0.0f;
 		FrameDelta = 0.0f;
+		// 快照 Keys 后再清理：foreach 期间修改字典会抛 InvalidOperationException
+		List<int> keys = new(BmpDict.Keys);
+		foreach (int key in keys)
+		{
+			if (BmpDict.TryGetValue(key, out Wa2Sprite sprite) && IsInstanceValid(sprite))
+			{
+				sprite.QueueFree();
+			}
+		}
+		BmpDict.Clear();
 		if (stop)
 		{
 			StopAutoMode();
@@ -676,6 +768,7 @@ public partial class Wa2EngineMain : Control
 		}
 		SoundMgr.StopAll();
 		AdvMain.SelectMessageContainer.Hide();
+		ResetWeather();
 	}
 	public void OnVideoFinished()
 	{
@@ -706,28 +799,53 @@ public partial class Wa2EngineMain : Control
 	}
 	public void StartScript(string name, int pos = 0)
 	{
-		SoundMgr.StopBgm();
-		Reset(true);
-		Calender = new();
-		GameFlags = new int[0x1d];
-		Backlogs.Clear();
-		ScriptStack.Clear();
-		Script = new(name, pos);
-		ScriptStack.Push(Script);
-		SetScriptIdx(Script.ScriptName);
-		// HasReadMessage = GetReadMessage(CurMessageIdx);
+		try
+		{
+			BootLog("StartScript:" + name + ":start");
+			SoundMgr.StopBgm();
+			Reset(true);
+			Calender = new();
+			GameFlags = new int[0x1d];
+			Backlogs.Clear();
+			ScriptStack.Clear();
+			Script = new(name, pos);
+			ScriptStack.Push(Script);
+			SetScriptIdx(Script.ScriptName);
+			// 换脚本/读档/重开时解除上一次的解析故障锁定
+			_scriptParseFaulted = false;
+			BootLog("StartScript:" + name + ":ok");
+			// HasReadMessage = GetReadMessage(CurMessageIdx);
+		}
+		catch (System.Exception e)
+		{
+			BootLog("StartScript:" + name + ":CRASH: " + e);
+			OpenErrorMessage("脚本启动失败:\n" + e.Message);
+		}
 	}
 	public void ScriptParse()
 	{
-		if (Script != null)
+		if (Script == null || _scriptParseFaulted)
+		{
+			return;
+		}
+		// 每帧从 _Process 调用的脚本解析入口。opcode 内部已有 Wa2Script.CallFunc 兜底，
+		// 这里再罩一层，覆盖 ReadU32 / ParseCalc / ParseJumpFlag 等解析路径——
+		// 它们抛异常同样会一路冒泡到 _Process 直接终止进程（iOS 上无日志闪退）。
+		try
 		{
 			Script.ParseCmd();
+		}
+		catch (System.Exception e)
+		{
+			_scriptParseFaulted = true;
+			BootLog("ScriptParse CRASH: " + e);
+			OpenErrorMessage("脚本解析失败:\n" + e.Message);
 		}
 	}
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public void InputKeyHandling()
 	{
-		if (UiMgr.UiQueue.Peek() != UiMgr.AdvMain && UiMgr.UiQueue.Peek() != UiMgr.UICalender && State != GameState.GAME)
+		if (UiMgr.UiQueue.Peek() != UiMgr.AdvMain && UiMgr.UiQueue.Peek() != UiMgr.UICalender)
 		{
 			StopSkip();
 			return;
@@ -737,7 +855,8 @@ public partial class Wa2EngineMain : Control
 		{
 			PressedTime += GetProcessDeltaTime();
 		}
-		if (Input.IsActionPressed("Skip") || PressedTime >= 0.5)
+		bool longPressSkip = Prefs.GetConfig("checkskip") == 1 && PressedTime >= 0.6f;
+		if (Input.IsActionPressed("Skip") || longPressSkip)
 		{
 			Skipping = true;
 		}
@@ -748,18 +867,28 @@ public partial class Wa2EngineMain : Control
 	}
 	public override void _Process(double delta)
 	{
+		UpdateSakuraWeatherAnimation(delta);
 		if (State == GameState.NONE)
 		{
 			if (OS.GetName() == "Android")
 			{
-				if (OS.GetGrantedPermissions().Contains("android.permission.MANAGE_EXTERNAL_STORAGE") || OS.GetGrantedPermissions().Contains("android.permission.READ_EXTERNAL_STORAGE"))
+				if (OS.GetGrantedPermissions().Contains("android.permission.MANAGE_EXTERNAL_STORAGE") || (OS.GetGrantedPermissions().Contains("android.permission.READ_EXTERNAL_STORAGE") && OS.GetGrantedPermissions().Contains("android.permission.WRITE_EXTERNAL_STORAGE")))
 				{
 					InitGame();
 				}
 			}
 			else
 			{
-				InitGame();
+				try
+				{
+					InitGame();
+					BootLog("Process:InitGame ok");
+				}
+				catch (System.Exception e)
+				{
+					BootLog("Process:InitGame CRASH: " + e);
+					OpenErrorMessage("启动失败:\n" + e.Message);
+				}
 			}
 
 		}
@@ -795,6 +924,7 @@ public partial class Wa2EngineMain : Control
 		}
 		else if (State == GameState.GAME)
 		{
+
 			InputKeyHandling();
 			UpdateTimer(delta);
 			UpdateFrame(delta);
@@ -813,20 +943,14 @@ public partial class Wa2EngineMain : Control
 		{
 			return;
 		}
-
-		if (AdvMain.State != Wa2AdvMain.AdvState.PARSE_TEXT
-			&& !AutoTimer.IsActive()
-			&& !WaitTimer.IsActive()
-			&& !CanSkip()
-			&& !AdvMain.SelectMessageContainer.Visible
-			&& (AdvMain.State == Wa2AdvMain.AdvState.END
-				|| AdvMain.State == Wa2AdvMain.AdvState.FADE_OUT
-				|| (DemoMode && AdvMain.State == Wa2AdvMain.AdvState.WAIT_CLICK))
-			&& UiMgr.UiQueue.Count > 0
-			&& UiMgr.UiQueue.Peek() == UiMgr.AdvMain
-			&& !AnimatorMgr.WaitAnimation())
+		if (AdvMain.State != Wa2AdvMain.AdvState.PARSE_TEXT && !AutoTimer.IsActive() && !WaitTimer.IsActive() && !CanSkip() && !AdvMain.SelectMessageContainer.Visible && (AdvMain.State == Wa2AdvMain.AdvState.END || AdvMain.State == Wa2AdvMain.AdvState.FADE_OUT || (DemoMode && AdvMain.State == Wa2AdvMain.AdvState.WAIT_CLICK)) && UiMgr.UiQueue.Peek() == UiMgr.AdvMain)
 		{
-			ScriptParse();
+
+			bool flag = !AnimatorMgr.WaitAnimation();
+			if (flag)
+			{
+				ScriptParse();
+			}
 		}
 	}
 	public bool CanSkip()
@@ -989,16 +1113,19 @@ public partial class Wa2EngineMain : Control
 	}
 	public void PlayMovie(string name)
 	{
-		if (!FileAccess.FileExists(Wa2Resource.ResPath + "movie/" + name + "0.ogv"))
+		// iOS: 使用 Godot 内置 VideoStreamPlayer 播放 movie/ 目录下的 ogv(Theora)。
+		// Android 版改用 addons/gde_gozen 直接解码原版 pak 视频，但该 GDExtension
+		// 没有 iOS 原生库，因此 iOS 沿用 0.1.8 的 ogv 方案。
+		string videoPath = Wa2Resource.ResPath + "movie/" + name + "0.ogv";
+		if (!FileAccess.FileExists(videoPath))
 		{
 			OnVideoFinished();
 		}
 		else
 		{
-			VideoStreamTheora s=new VideoStreamTheora();
-			s.File=Wa2Resource.ResPath + "movie/" + name + "0.ogv";
-			VideoPlayer.Stream=s;
-			GD.Print((float)VideoPlayer.GetStreamLength());
+			VideoStreamTheora stream = new VideoStreamTheora();
+			stream.File = videoPath;
+			VideoPlayer.Stream = stream;
 			WaitTimer.Start((float)VideoPlayer.GetStreamLength());
 			VideoPlayer.Play();
 			VideoPlayer.Show();
@@ -1012,16 +1139,12 @@ public partial class Wa2EngineMain : Control
 		BgInfo.Type = type;
 		AnimatorMgr.FinishAll(true);
 		Texture2D NextTexture;
-		Texture2D CeacheTexture = null;
-		bool needsSnapshot = !updateChar && frame > 0;
-		if (needsSnapshot)
-		{
-			CeacheTexture = ImageTexture.CreateFromImage(Viewport.GetTexture().GetImage());
-		}
+		Texture2D CeacheTexture = ImageTexture.CreateFromImage(Viewport.GetTexture().GetImage());
 		Wa2Image targetTexture;
 		if (updateChar)
 		{
 			targetTexture = BgTexture;
+			// UpdateWeatherIndex();
 		}
 		else
 		{
@@ -1041,9 +1164,9 @@ public partial class Wa2EngineMain : Control
 			else
 			{
 				BgInfo.Path = string.Format("B{0:D4}{1:D1}{2:D1}.tga", id / 10, id % 10, TimeMode);
-				}
-				NextTexture = Wa2Resource.GetTgaImage(BgInfo.Path);
 			}
+			NextTexture = Wa2Resource.GetTgaImage(BgInfo.Path);
+		}
 		else
 		{
 			NextTexture = BgTexture.GetCurTexture();
@@ -1059,53 +1182,31 @@ public partial class Wa2EngineMain : Control
 		}
 		BgInfo.Offset = new Vector2(x - offset, y);
 		BgInfo.Scale = new Vector2(scaleX, ScaleY);
-			targetTexture.SetNextTexture(NextTexture);
+		targetTexture.SetNextTexture(NextTexture);
 
-		if (!updateChar && frame <= 0)
+		if (!updateChar)
 		{
-			MaskTexture.SetCurTexture(null);
-			MaskTexture.SetNextTexture(null);
-			MaskTexture.SetBlend(0);
-			MaskTexture.Hide();
-			BgTexture.SetCurOffset(BgInfo.Offset);
-			BgTexture.SetCurScale(BgInfo.Scale);
-			BgTexture.SetCurTexture(NextTexture);
-			BgTexture.SetNextTexture(null);
-			BgTexture.SetBlend(0);
-		}
-		else if (!updateChar)
-		{
-			MaskTexture.SetCurTexture(CeacheTexture);
+			// MaskTexture.SetCurTexture(CeacheTexture);
 			MaskTexture.SetCurOffset(Vector2.Zero);
 			MaskTexture.SetCurScale(Vector2.One);
 			MaskTexture.SetNextOffset(BgInfo.Offset);
 			MaskTexture.SetNextScale(BgInfo.Scale);
-			BgTexture.SetCurOffset(BgInfo.Offset);
-			BgTexture.SetCurScale(BgInfo.Scale);
-			BgTexture.SetCurTexture(NextTexture);
-				AnimatorMgr.AddMaskFeadAnimation(MaskTexture, frame * FrameTime, true);
-			}
-			else if (frame <= 0)
-			{
-				BgTexture.SetCurOffset(BgInfo.Offset);
-				BgTexture.SetCurScale(BgInfo.Scale);
-				BgTexture.SetCurTexture(NextTexture);
-				BgTexture.SetNextTexture(null);
-				BgTexture.SetBlend(0);
-			}
-			else
-			{
-				AnimatorMgr.AddBgFeadAnimation(BgTexture, frame * FrameTime, BgInfo.Offset, BgInfo.Scale);
-			}
+			AnimatorMgr.AddMaskFeadAnimation(MaskTexture, BgTexture, BgInfo, frame * FrameTime);
+		}
+		else
+		{
+			AnimatorMgr.AddBgFeadAnimation(BgTexture, frame * FrameTime, BgInfo.Offset, BgInfo.Scale);
+		}
 		if (updateChar)
 		{
 			UpdateChar(frame * FrameTime);
 		}
 		else
-			{
-				ClearChar(frame * FrameTime);
-			}
+		{
+			ClearChar(frame * FrameTime);
 		}
+
+	}
 	public bool ClearChar(float time)
 	{
 		for (int i = 0; i < Chars.Length; i++)
@@ -1114,17 +1215,7 @@ public partial class Wa2EngineMain : Control
 			{
 				continue;
 			}
-			if (time > 0)
-			{
-				AnimatorMgr.AddCharFeadAnimation(Chars[i], null, time);
-			}
-			else
-			{
-				Chars[i].SetCurTexture(null);
-				Chars[i].SetNextTexture(null);
-				Chars[i].SetBlend(0);
-				Chars[i].Hide();
-			}
+			AnimatorMgr.AddCharFeadAnimation(Chars[i], null, time);
 		}
 		CharItems.Clear();
 		return false;
@@ -1153,6 +1244,44 @@ public partial class Wa2EngineMain : Control
 	{
 		ErrorMessage.Open(message);
 	}
+	// 启动诊断：把关键里程碑写入 user://boot.log，便于无 Mac 时通过爱思助手取回定位崩溃点
+	public void BootLog(string s)
+	{
+		try
+		{
+			string p = "user://boot.log";
+			string prev = "";
+			if (FileAccess.FileExists(p))
+			{
+				using var r = FileAccess.Open(p, FileAccess.ModeFlags.Read);
+				if (r != null) prev = r.GetAsText();
+			}
+			using var f = FileAccess.Open(p, FileAccess.ModeFlags.Write);
+			if (f != null) f.StoreString(prev + $"[{Time.GetTicksMsec()}] {s}\n");
+		}
+		catch { }
+	}
+	// async void 的信号/回调处理器没有调用方可以 await，异常会直接冒泡到同步上下文并终止进程，
+	// 在 iOS 上表现为「无日志闪退」。这里提供统一兜底：写 boot.log + 弹错误框，
+	// 与 _Ready / StartScript 的兜底行为保持一致。
+	// 配套约定：公开的处理器改成同步 void，只做参数校验后转调私有的 async Task 实现。
+	public static void RunGuarded(Func<Task> task, string where)
+	{
+		_ = RunGuardedAsync(task, where);
+	}
+	private static async Task RunGuardedAsync(Func<Task> task, string where)
+	{
+		try
+		{
+			await task();
+		}
+		catch (Exception e)
+		{
+			GD.PrintErr($"{where} CRASH: {e}");
+			Engine.BootLog($"{where} CRASH: {e}");
+			Engine.OpenErrorMessage($"{where} 失败:\n{e.Message}");
+		}
+	}
 	public void InitEffect(int flag, int spdX, int spdY, int a4, int count, int a6, int a7)
 	{
 		byte type = (byte)flag;
@@ -1172,6 +1301,341 @@ public partial class Wa2EngineMain : Control
 				break;
 			default:
 				break;
+		}
+	}
+	public void SetWeather(int flag, int speedX, int speedY, int thrbulence, int count, int flag2, int index)
+	{
+		ClearExtraWeatherParticles();
+		SakuraWeatherTextures.Clear();
+		SakuraWeatherAnimationTime = 0.0;
+		SakuraWeatherFrame = -1;
+		WeatherParticles.Amount = 1;
+		WeatherParticles.Material = null;
+		WeatherInfo = new();
+		WeatherInfo.Flag = flag;
+		WeatherInfo.SpeedX = speedX;
+		WeatherInfo.SpeedY = speedY;
+		WeatherInfo.Thrbulence = thrbulence;
+		WeatherInfo.Count = count;
+		WeatherInfo.Flag2 = flag2;
+		WeatherParticles.Visible = true;
+		WeatherParticles.Emitting = true;
+		WeatherParticles.Amount = count;
+		ShaderMaterial shaderMaterial = new ShaderMaterial();
+		WeatherParticles.ProcessMaterial = shaderMaterial;
+		WeatherParticles.Lifetime = 20f;
+		if ((flag & 0x100) != 0)
+		{
+			WeatherParticles.Explosiveness = 0.8f;
+		}
+		else
+		{
+			WeatherParticles.Explosiveness = 0.0f;
+		}
+		switch ((byte)flag)
+		{
+			case 0:
+				Rain.Show();
+				Rain.Play();
+				break;
+			case 1:
+				{
+					SetupWeatherMode1Layer(WeatherParticles, "res://assets/grp/sakura1_2.png", 0, Math.Max(1, count / 20), speedX, speedY, flag);
+					int remaining = Math.Max(0, count - WeatherParticles.Amount);
+					GpuParticles2D layer2 = CreateExtraWeatherParticleLayer();
+					SetupWeatherMode1Layer(layer2, "res://assets/grp/sakura2.png", 1, remaining / 2, speedX, speedY, flag);
+					GpuParticles2D layer3 = CreateExtraWeatherParticleLayer();
+					SetupWeatherMode1Layer(layer3, "res://assets/grp/sakura3.png", 2, remaining - remaining / 2, speedX, speedY, flag);
+					SetWeatherIndex(index);
+					UpdateSakuraWeatherAnimation(0.0);
+					break;
+				}
+			case 3:
+				{
+					int largeCount = Math.Max(1, count / 32);
+					SetupSnowWeatherLayer(WeatherParticles, "res://shader/weather_mode3.gdshader", Math.Max(1, count - largeCount), speedX, speedY, flag & 0xe00, 0, SnowLargeLayerModeExcludeLarge);
+					GpuParticles2D largeLayer = CreateExtraWeatherParticleLayer();
+					SetupSnowWeatherLayer(largeLayer, "res://shader/weather_mode3.gdshader", largeCount, speedX, speedY, flag & 0xe00, 0, SnowLargeLayerModeOnlyLarge);
+					SetWeatherIndex(index);
+					break;
+				}
+			case 4:
+				{
+					AtlasTexture texture = new AtlasTexture();
+					texture.Atlas = GD.Load<Texture2D>("res://assets/grp/weather.png");
+					texture.Region = new Rect2(0, 32, 32, 32);
+					WeatherParticles.Texture = texture;
+					shaderMaterial.Shader = GD.Load<Shader>("res://shader/weather_mode4.gdshader");
+					shaderMaterial.SetShaderParameter("speed_x", speedX);
+					shaderMaterial.SetShaderParameter("speed_y", speedY);
+					shaderMaterial.SetShaderParameter("mask", flag & 0xe00);
+					SetWeatherIndex(index);
+					break;
+				}
+			case 6:
+				{
+					int largeCount = Math.Max(1, count / 4);
+					SetupSnowWeatherLayer(WeatherParticles, "res://shader/weather_mode6.gdshader", Math.Max(1, count - largeCount), speedX, speedY, flag & 0xe00, thrbulence, SnowLargeLayerModeExcludeLarge);
+					GpuParticles2D largeLayer = CreateExtraWeatherParticleLayer();
+					SetupSnowWeatherLayer(largeLayer, "res://shader/weather_mode6.gdshader", largeCount, speedX, speedY, flag & 0xe00, thrbulence, SnowLargeLayerModeOnlyLarge);
+					SetWeatherIndex(index);
+					break;
+				}
+		}
+
+	}
+	public void SetWeatherIndex(int index)
+	{
+		WeatherInfo.Index = index;
+		if (index == 0)
+		{
+			WeatherInfo.Index = 0;
+			ApplyWeatherParticleZIndex(0);
+		}
+		else if (index == 1)
+		{
+			WeatherInfo.Index = 1999;
+			ApplyWeatherParticleZIndex(99);
+		}
+		else if (index == 2)
+		{
+			ApplyWeatherParticleZIndex(999);
+		}
+	}
+	private void ApplyWeatherParticleZIndex(int zIndex)
+	{
+		if (WeatherInfo != null && ((byte)WeatherInfo.Flag) == 1 && ExtraWeatherParticles.Count == 2)
+		{
+			int charZIndex = CharGroup is CanvasItem charCanvasItem ? charCanvasItem.ZIndex : 1;
+			int frontZIndex = Math.Max(zIndex, charZIndex + 1);
+			int backZIndex = Math.Min(zIndex, charZIndex - 1);
+			WeatherParticles.ZIndex = frontZIndex;
+			ExtraWeatherParticles[0].ZIndex = frontZIndex;
+			ExtraWeatherParticles[1].ZIndex = backZIndex;
+			return;
+		}
+		if (WeatherInfo != null && (((byte)WeatherInfo.Flag) == 3 || ((byte)WeatherInfo.Flag) == 6) && ExtraWeatherParticles.Count == 1)
+		{
+			int charZIndex = CharGroup is CanvasItem charCanvasItem ? charCanvasItem.ZIndex : 1;
+			WeatherParticles.ZIndex = Math.Min(zIndex, charZIndex - 1);
+			ExtraWeatherParticles[0].ZIndex = Math.Max(zIndex, charZIndex + 1);
+			return;
+		}
+
+		WeatherParticles.ZIndex = zIndex;
+		foreach (GpuParticles2D particleLayer in ExtraWeatherParticles)
+		{
+			particleLayer.ZIndex = zIndex;
+		}
+	}
+	private GpuParticles2D CreateExtraWeatherParticleLayer()
+	{
+		GpuParticles2D particleLayer = new()
+		{
+			Name = "WeatherParticlesExtra",
+			Position = WeatherParticles.Position,
+			ZIndex = WeatherParticles.ZIndex,
+			Lifetime = WeatherParticles.Lifetime,
+			Explosiveness = WeatherParticles.Explosiveness,
+			Visible = WeatherParticles.Visible,
+			Emitting = WeatherParticles.Emitting
+		};
+		WeatherParticles.GetParent().AddChild(particleLayer);
+		ExtraWeatherParticles.Add(particleLayer);
+		return particleLayer;
+	}
+	private void SetupSnowWeatherLayer(GpuParticles2D particleLayer, string shaderPath, int amount, int speedX, int speedY, int mask, int thrbulence, int largeLayerMode)
+	{
+		AtlasTexture texture = new()
+		{
+			Atlas = GD.Load<Texture2D>("res://assets/grp/weather.png"),
+			Region = new Rect2(0, 32, 32, 32)
+		};
+		ShaderMaterial material = new()
+		{
+			Shader = GD.Load<Shader>(shaderPath)
+		};
+		particleLayer.Texture = texture;
+		particleLayer.Material = null;
+		particleLayer.ProcessMaterial = material;
+		particleLayer.Amount = Math.Max(1, amount);
+		particleLayer.Lifetime = WeatherParticles.Lifetime;
+		particleLayer.Explosiveness = WeatherParticles.Explosiveness;
+		particleLayer.Visible = true;
+		particleLayer.Emitting = true;
+		material.SetShaderParameter("speed_x", speedX);
+		material.SetShaderParameter("speed_y", speedY);
+		material.SetShaderParameter("mask", mask);
+		material.SetShaderParameter("large_layer_mode", largeLayerMode);
+		if (thrbulence != 0)
+		{
+			material.SetShaderParameter("thrbulence", thrbulence);
+		}
+	}
+	private Rect2 GetSakuraParticleRegion(Texture2D atlas, int frame)
+	{
+		float cellWidth = atlas.GetWidth() / (float)SakuraParticleColumns;
+		float cellHeight = atlas.GetHeight() / (float)SakuraParticleRows;
+		int column = frame % SakuraParticleColumns;
+		int row = frame / SakuraParticleColumns;
+		return new Rect2(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+	}
+	private void UpdateSakuraWeatherAnimation(double delta)
+	{
+		if (WeatherInfo == null || ((byte)WeatherInfo.Flag) != 1 || SakuraWeatherTextures.Count == 0)
+		{
+			return;
+		}
+
+		SakuraWeatherAnimationTime += delta;
+		int frame = (int)Math.Floor(SakuraWeatherAnimationTime * SakuraParticleFrameRate) % SakuraParticleFrameCount;
+		if (frame == SakuraWeatherFrame)
+		{
+			return;
+		}
+
+		SakuraWeatherFrame = frame;
+		foreach (AtlasTexture texture in SakuraWeatherTextures)
+		{
+			if (texture.Atlas == null)
+			{
+				continue;
+			}
+			texture.Region = GetSakuraParticleRegion(texture.Atlas, frame);
+		}
+	}
+	private void SetupWeatherMode1Layer(GpuParticles2D particleLayer, string texturePath, int particleType, int amount, int speedX, int speedY, int flag)
+	{
+		Texture2D atlas = GD.Load<Texture2D>(texturePath);
+		AtlasTexture texture = new()
+		{
+			Atlas = atlas,
+			Region = GetSakuraParticleRegion(atlas, 0)
+		};
+		ShaderMaterial material = new()
+		{
+			Shader = GD.Load<Shader>("res://shader/weather_mode1.gdshader")
+		};
+		amount = Math.Max(1, amount);
+		particleLayer.Texture = texture;
+		particleLayer.Material = null;
+		particleLayer.ProcessMaterial = material;
+		particleLayer.Amount = amount;
+		particleLayer.Lifetime = WeatherParticles.Lifetime;
+		particleLayer.Explosiveness = WeatherParticles.Explosiveness;
+		particleLayer.Visible = true;
+		particleLayer.Emitting = true;
+		material.SetShaderParameter("speed_x", speedX);
+		material.SetShaderParameter("speed_y", speedY);
+		material.SetShaderParameter("forced_type", particleType);
+		material.SetShaderParameter("initial_fill_count", (flag & 0x100) != 0 ? 4 * amount / 5 : 0);
+		material.SetShaderParameter("texture_scale", SakuraParticleTextureScale);
+		SakuraWeatherTextures.Add(texture);
+	}
+	private void ClearExtraWeatherParticles()
+	{
+		foreach (GpuParticles2D particleLayer in ExtraWeatherParticles)
+		{
+			if (IsInstanceValid(particleLayer))
+			{
+				particleLayer.QueueFree();
+			}
+		}
+		ExtraWeatherParticles.Clear();
+		SakuraWeatherTextures.Clear();
+	}
+	public void ResetWeather()
+	{
+		ClearExtraWeatherParticles();
+		SakuraWeatherAnimationTime = 0.0;
+		SakuraWeatherFrame = -1;
+		Rain.Hide();
+		Rain.Stop();
+		WeatherInfo = null;
+		WeatherParticles.Amount = 1;
+		WeatherParticles.Visible = false;
+		WeatherParticles.Emitting = false;
+		WeatherParticles.Material = null;
+		WeatherParticles.ProcessMaterial = null;
+
+	}
+	public void UpdateWeatherIndex()
+	{
+		if (WeatherInfo == null)
+		{
+			return;
+		}
+		if ((byte)WeatherInfo.Flag == 0)
+		{
+			ResetWeather();
+		}
+		else if (WeatherInfo.Index == 2)
+		{
+			SetWeatherIndex(0);
+		}
+		else
+		{
+			ResetWeather();
+		}
+	}
+	public void SetWeatherSpeedX(int val)
+	{
+		WeatherInfo.SpeedX = val;
+		if (WeatherParticles.ProcessMaterial != null && WeatherParticles.ProcessMaterial is ShaderMaterial)
+		{
+			(WeatherParticles.ProcessMaterial as ShaderMaterial).SetShaderParameter("speed_x", val);
+		}
+		foreach (GpuParticles2D particleLayer in ExtraWeatherParticles)
+		{
+			if (particleLayer.ProcessMaterial is ShaderMaterial material)
+			{
+				material.SetShaderParameter("speed_x", val);
+			}
+		}
+
+	}
+	public void SetWeatherSpeedY(int val)
+	{
+		WeatherInfo.SpeedX = val;
+		if (WeatherParticles.ProcessMaterial != null && WeatherParticles.ProcessMaterial is ShaderMaterial)
+		{
+			(WeatherParticles.ProcessMaterial as ShaderMaterial).SetShaderParameter("speed_y", val);
+		}
+		foreach (GpuParticles2D particleLayer in ExtraWeatherParticles)
+		{
+			if (particleLayer.ProcessMaterial is ShaderMaterial material)
+			{
+				material.SetShaderParameter("speed_y", val);
+			}
+		}
+
+	}
+	public void SetWeatherCount(int val)
+	{
+		WeatherInfo.Count = val;
+		if (((byte)WeatherInfo.Flag) == 1 && ExtraWeatherParticles.Count == 2)
+		{
+			int largeCount = Math.Max(1, val / 20);
+			int remaining = Math.Max(0, val - largeCount);
+			WeatherParticles.Amount = largeCount;
+			ExtraWeatherParticles[0].Amount = Math.Max(1, remaining / 2);
+			ExtraWeatherParticles[1].Amount = Math.Max(1, remaining - remaining / 2);
+		}
+		else if (((byte)WeatherInfo.Flag) == 3 && ExtraWeatherParticles.Count == 1)
+		{
+			int largeCount = Math.Max(1, val / 32);
+			WeatherParticles.Amount = Math.Max(1, val - largeCount);
+			ExtraWeatherParticles[0].Amount = largeCount;
+		}
+		else if (((byte)WeatherInfo.Flag) == 6 && ExtraWeatherParticles.Count == 1)
+		{
+			int largeCount = Math.Max(1, val / 4);
+			WeatherParticles.Amount = Math.Max(1, val - largeCount);
+			ExtraWeatherParticles[0].Amount = largeCount;
+		}
+		else
+		{
+			WeatherParticles.Amount = val;
 		}
 	}
 }

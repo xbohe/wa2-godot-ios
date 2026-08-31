@@ -1,9 +1,12 @@
 using Godot;
-
+using System.Threading.Tasks;
 
 
 public partial class TitleMenu : Control
 {
+	// 点击跳过动画时不允许被打断的动画名（close 之后紧接着切场景，跳过会导致状态错乱）。
+	private static readonly StringName SkipProtectedAnimation = "close";
+
 	[Export]
 	public Wa2Button CgModeButton;
 	[Export]
@@ -146,76 +149,76 @@ public partial class TitleMenu : Control
 		MenuBttons.Hide();
 		Special.Show();
 	}
-	public async void OnCodeaButtonDown()
+	public void OnCodeaButtonDown()
 	{
 		if (!CanOpenContent())
 			return;
+		Wa2EngineMain.RunGuarded(OnCodeaButtonDownAsync, "TitleMenu.OnCodeaButtonDown");
+	}
+	private async Task OnCodeaButtonDownAsync()
+	{
 		_engine.SoundMgr.StopBgm();
 		AnimationPlayer.Play("close");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.StartScript("3001");
 		_engine.UiMgr.OpenGame();
 	}
-	public async void OnCCButtonDown()
+	public void OnCCButtonDown()
 	{
 		if (!CanOpenContent())
 			return;
+		Wa2EngineMain.RunGuarded(OnCCButtonDownAsync, "TitleMenu.OnCCButtonDown");
+	}
+	private async Task OnCCButtonDownAsync()
+	{
 		_engine.SoundMgr.StopBgm();
 		AnimationPlayer.Play("close");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.StartScript("2001");
 		_engine.UiMgr.OpenGame();
 	}
-	public async void OnDigitalNovel1ButtonDown()
+	public void OnDigitalNovel1ButtonDown()
 	{
 		if (!CanOpenContent())
 			return;
+		Wa2EngineMain.RunGuarded(OnDigitalNovel1ButtonDownAsync, "TitleMenu.OnDigitalNovel1ButtonDown");
+	}
+	private async Task OnDigitalNovel1ButtonDownAsync()
+	{
 		_engine.SoundMgr.StopBgm();
 		AnimationPlayer.Play("close");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.StartScript("5000");
 		_engine.UiMgr.OpenGame();
-
 	}
-	public async void OnDigitalNovel2ButtonDown()
+	public void OnDigitalNovel2ButtonDown()
 	{
 		if (!CanOpenContent())
 			return;
+		Wa2EngineMain.RunGuarded(OnDigitalNovel2ButtonDownAsync, "TitleMenu.OnDigitalNovel2ButtonDown");
+	}
+	private async Task OnDigitalNovel2ButtonDownAsync()
+	{
 		_engine.SoundMgr.StopBgm();
 		AnimationPlayer.Play("close");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.StartScript("5100");
 		_engine.UiMgr.OpenGame();
-
 	}
-	public async void OnIcButtonDown()
+	public void OnIcButtonDown()
 	{
 		if (!CanOpenContent())
 			return;
+		Wa2EngineMain.RunGuarded(OnIcButtonDownAsync, "TitleMenu.OnIcButtonDown");
+	}
+	private async Task OnIcButtonDownAsync()
+	{
 		_engine.SoundMgr.StopBgm();
 		AnimationPlayer.Play("close");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.StartScript("1001");
 		_engine.UiMgr.OpenGame();
 	}
-	// public async void OnAs1ButtonDown()
-	// {
-	// 	_engine.SoundMgr.StopBgm();
-	// 	AnimationPlayer.Play("close");
-	// 	await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
-	// 	_engine.StartScript("6001");
-	// 	_engine.UiMgr.OpenGame();
-
-	// }
-	// public async void OnAs2ButtonDown()
-	// {
-	// 	_engine.SoundMgr.StopBgm();
-	// 	AnimationPlayer.Play("close");
-	// 	await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
-	// 	_engine.StartScript("6101");
-	// 	_engine.UiMgr.OpenGame();
-
-	// }
 	public void OnQuitButtonDown()
 	{
 		GetTree().Quit();
@@ -237,17 +240,21 @@ public partial class TitleMenu : Control
 		MenuBttons.Hide();
 		InitalStart.Show();
 	}
-	public async void Open()
+	public void Open()
 	{
 		SetResourcesReady(_engine.ResourcesReady);
 		Show();
+		Wa2EngineMain.RunGuarded(OpenAsync, "TitleMenu.Open");
+	}
+	private async Task OpenAsync()
+	{
 		AnimationPlayer.Play("RESET");
 		await ToSignal(AnimationPlayer, AnimationPlayer.SignalName.AnimationFinished);
 		_engine.SoundMgr.StopBgm();
 		if (_engine.ReplayMode > 0 && _engine.ResourcesReady)
 		{
 			AnimationPlayer.Play("open");
-			AnimationPlayer.Advance(AnimationPlayer.CurrentAnimation.Length);
+			AnimationPlayer.Advance(AnimationPlayer.CurrentAnimationLength);
 			_engine.UiMgr.OpenSceneReplayMenu();
 		}
 		else
@@ -274,9 +281,12 @@ public partial class TitleMenu : Control
 
 		if (@event is InputEventMouseButton && (@event as InputEventMouseButton).ButtonIndex == MouseButton.Left && @event.IsPressed())
 		{
-			if (AnimationPlayer.CurrentAnimation != "close")
+			// 4.6 起 CurrentAnimation 由 string 变为 StringName，比较时用 StringName 常量避免依赖隐式转换。
+			// 之前写法是 CurrentAnimation.Length —— 4.5 下取到的是「动画名的字符串长度」（"open"=4），
+			// 并非动画时长；4.6 起 StringName 没有 Length 成员，会直接编译失败。
+			if (AnimationPlayer.CurrentAnimation != SkipProtectedAnimation)
 			{
-				AnimationPlayer.Advance(AnimationPlayer.CurrentAnimation.Length);
+				AnimationPlayer.Advance(AnimationPlayer.CurrentAnimationLength);
 			}
 
 		}

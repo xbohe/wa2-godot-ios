@@ -1,4 +1,5 @@
 using Godot;
+using System.Threading.Tasks;
 public partial class SceneReplayMenu : BasePage
 {
   [Export]
@@ -38,7 +39,11 @@ public partial class SceneReplayMenu : BasePage
     _engine.ReplayMode = 0;
     UpdatePage();
   }
-  public async void OnSelectScene(int idx)
+  public void OnSelectScene(int idx)
+  {
+    Wa2EngineMain.RunGuarded(() => OnSelectSceneAsync(idx), "SceneReplayMenu.OnSelectScene");
+  }
+  private async Task OnSelectSceneAsync(int idx)
   {
     _engine.ReplayMode = idx;
     FaseClose();

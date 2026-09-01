@@ -1,0 +1,32 @@
+WA2 Godot (iOS port) Porting Code
+Copyright 2026 WA2 Godot port contributors
+
+This iOS port is derived from WA2 Godot
+(https://github.com/dorakyuraduang/wa2-godot), Copyright 2026 WA2 Godot port
+contributors. The original porting code identified in PORTING_CODE.md is
+licensed under the Apache License, Version 2.0.
+
+The porting code identified in PORTING_CODE.md is licensed under the Apache
+License, Version 2.0.
+
+Provenance / fork lineage
+-------------------------
+This repository (xbohe/wa2-godot-ios) is an iOS adaptation of WA2 Godot. Its
+initial iOS port was created by Gdadfk in the fork Gdadfk/wa2-godot-ios
+(commit "5c393ba Initial iOS port"), which itself forked dorakyuraduang/wa2-godot
+(the Android upstream). Attribution for the underlying Godot engine reimplementation
+is retained to dorakyuraduang/wa2-godot and its contributors; attribution for the
+original iOS bring-up is retained to Gdadfk.
+
+Modifications in this iOS fork
+------------------------------
+The iOS-specific changes listed under "Modifications in this iOS fork" in
+PORTING_CODE.md are modifications to the above Apache-2.0 porting files, made
+under the same Apache License, Version 2.0. Redistributors must comply with
+Apache-2.0 Section 4(b) and 4(d): mark modified files, retain this NOTICE, and
+provide the license text in LICENSES/Apache-2.0.txt.
+
+This is an unofficial project. It is not affiliated with, authorized by, or
+endorsed by AQUAPLUS. WHITE ALBUM2 and related names, characters, software,
+content, and trademarks belong to their respective rightsholders. This
+distribution contains no license to those materials.

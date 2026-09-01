@@ -1,0 +1,66 @@
+WA2 Godot (iOS port) Repository License Notice
+
+This repository is an iOS port derived from WA2 Godot
+(https://github.com/dorakyuraduang/wa2-godot). It is not licensed as a single
+work under the MIT License or under any other single open-source license.
+Different files have different copyright owners and license terms.
+
+1. WA2 Godot porting code (Apache License 2.0)
+
+The contributor-authored scripts, shaders, Godot scenes, animation
+configuration, font mapping, and project integration files identified in
+`PORTING_CODE.md` are licensed under the Apache License, Version 2.0. The
+complete license text is in `LICENSES/Apache-2.0.txt`.
+
+This grant covers only the original implementation contained in those files.
+It does not cover game data read at runtime, referenced external resources,
+WHITE ALBUM2 content, or any rights that a contributor does not own or have
+authority to license.
+
+No separate permission or pull request is required to exercise the rights
+granted by Apache-2.0. Recipients may fork, modify, port, and redistribute the
+covered code in their own repositories, subject only to that license's terms.
+
+2. Texture Fonts editor addon (MIT License)
+
+The Godot editor plugin under `addons/texture_fonts` is licensed under the MIT
+License, independent of the Apache-2.0 porting code. Its terms are in
+`addons/texture_fonts/LICENSE` (Copyright (c) 2021-2024 Micky (Mickeon),
+Laila L. (ElectronicBlueberry)).
+
+3. Other explicitly licensed files
+
+A file is licensed only when that file contains an explicit license or SPDX
+identifier, or when another notice in this repository unambiguously identifies
+that file and its license. The applicable notice, not this repository-level
+document, controls those files.
+
+4. Unmarked repository files
+
+No copyright license is granted by this repository for an unmarked file. Making
+source code available for inspection does not by itself grant permission to
+copy, modify, redistribute, sublicense, or sell it.
+
+5. WHITE ALBUM2 and other proprietary material
+
+No license or other rights are granted to WHITE ALBUM2, its software, scripts,
+dialogue, audiovisual material, fonts, characters, trademarks, or other
+copyrighted or proprietary material owned by AQUAPLUS or any other rightsholder.
+
+Material extracted, copied, translated, transcribed, converted, decompiled, or
+otherwise derived from such material is not covered by the Apache-2.0 License
+in this repository. Its presence in a local working tree does not imply
+permission to publish or redistribute it. Material without sufficient
+redistribution permission must not be committed or released.
+
+This project is unofficial and is not affiliated with or endorsed by AQUAPLUS.
+
+6. Third-party notices
+
+See `PORTING_CODE.md`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `SUBTITLE_NOTICE.md`,
+`ASSET_POLICY.md`, `LICENSES`, and component-level license files for additional
+terms and repository boundaries.
+
+Contributors must submit only material they created themselves or are
+authorized to distribute. Contributions to paths listed in `PORTING_CODE.md`
+are provided under Apache-2.0.

@@ -1,10 +1,88 @@
 # wa2-godot-iOS
 
-本项目移植自 [dorakyuraduang/wa2-godot](https://github.com/dorakyuraduang/wa2-godot)。
+> **非官方** WHITE ALBUM2 iOS 移植版，基于 Godot 4.7.2-stable（mono / C#）引擎。
 
-当前项目已同步到上游 `wa2-godot 0.2.9`，并叠加 iOS 平台适配。
+本仓库只包含让游戏在 iOS 上运行所需的代码与配置，**不包含 WHITE ALBUM2 的任何游戏资源**，游戏本体资源请自行合法获取。
 
-## 本次升级带来的变化（0.1.8 → 0.2.9）
+---
+
+## 一、移植来源与派生关系（上游凭证）
+
+本项目并非从零自研，而是对他人开源成果的逐层派生。完整的派生链如下：
+
+```text
+xbohe/wa2-godot-ios        ← 本仓库（当前 origin，iOS 适配持续维护）
+        ↑ fork
+Gdadfk/wa2-godot-ios       ← 初始 iOS 移植（commit 5c393ba "Initial iOS port"，作者 Gdadfk）
+        ↑ fork
+dorakyuraduang/wa2-godot   ← 上游基线（Android 版，AQUAPLUS 同人 Godot 引擎重制）
+```
+
+- **上游基线**：[`dorakyuraduang/wa2-godot`](https://github.com/dorakyuraduang/wa2-godot) 是把 WHITE ALBUM2 用 Godot 重制的 Android 版开源项目，版本节奏由它决定。
+- **初始 iOS 移植**：[`Gdadfk/wa2-godot-ios`](https://github.com/Gdadfk/wa2-godot-ios) 完成了第一版把该 Android 项目搬到 iOS 的工作（commit `5c393ba`）。**本仓库的初始 iOS 代码即来自此 fork**，作者归 Gdadfk。
+- **当前维护**：本仓库 `xbohe/wa2-godot-ios` 在 Gdadfk 的初始移植之上，继续同步上游、升级引擎、修复问题、完善构建与许可。
+
+> 因此，本仓库的 iOS 适配代码同时承载了两层上游关系：底层的 Godot 重制逻辑来自 `dorakyuraduang/wa2-godot`，iOS 平台移植骨架来自 `Gdadfk/wa2-godot-ios`。两者均在下方许可与署名中体现。
+
+---
+
+## 二、上游许可与凭证说明
+
+### 上游的许可演变
+
+- **上游 `v0.2.9` 基线（本 fork 的起点）没有 LICENSE 文件** —— 当时上游仓库未声明任何许可证。
+- 上游后续在 `main` 改为**按组件混合许可**框架（与本项目采用的框架一致）：
+  - 移植代码（`script/**`、`scene/**`、`shader/**` 等）→ **Apache License 2.0**
+  - `addons/wmv_video` → **MIT**（但其内置的 FFmpeg / godot-cpp 等仍各自许可）
+  - `addons/texture_fonts` → **MIT**
+  - `assets/sub.yaml` 字幕数据 → **第三方内容**（非 Apache-2.0 覆盖）
+  - WHITE ALBUM2 游戏素材 → **明确不授予任何权利**
+
+### 本 fork 的许可证选择
+
+本仓库**跟随上游主线的混合许可框架**：
+
+- 移植代码（范围见 [`PORTING_CODE.md`](./PORTING_CODE.md)）采用 **Apache License 2.0**；
+- 保留上游的 [`NOTICE`](./NOTICE) 署名与 **AQUAPLUS 免责声明**；
+- 本 fork 的 iOS 专属改动，是对上述 Apache-2.0 文件的**修改（modifications）**，再分发时同样按 Apache-2.0 提供（见第九节）。
+
+> 本仓库**不是单一协议**作品，不同文件归属不同版权与协议，详见根目录协议文件（第九节）。
+
+---
+
+## 三、同步与版本状态
+
+- 当前已同步到上游 **`wa2-godot 0.2.9`**，并叠加 iOS 平台适配。
+- **未整体升级到上游 `v0.3b`**。决策依据：
+  1. `v0.3b` 把视频播放换成 `addons/wmv_video`（FFmpeg GDExtension），但其二进制**只有 Android `.so` + Windows `.dll`，无 iOS 库**；官方也自述 beta、视频不稳；
+  2. 上游 `v0.3b` 目标 Godot **4.5**，低于本 fork 的 **4.7.2**，脚本 API 适配方向相反；
+  3. 非视频改动极小，收益低、风险高。
+- 维持 **v0.2.9 基线 + Godot 4.7.2 + ogv 视频方案**。
+
+---
+
+## 四、移植内容：保留了上游哪些 / 未采用哪些
+
+下表说明本 fork 相对上游 `dorakyuraduang/wa2-godot`（及 Gdadfk 初始移植）的取舍。带「iOS 新增/修改」的条目即本 fork 在 Apache-2.0 文件上的改动。
+
+| 组成 | 处理 | 说明 |
+|---|---|---|
+| 引擎运行时脚本 `script/**/*.cs` | **保留上游（Apache-2.0）** | 资源读取 / 运行时逻辑；本 fork 仅在其中加入 iOS 分支（见下） |
+| 场景 `scene/**/*.tscn`、动画 `assets/ani/**/*.tres`、着色器 `shader/**/*.gdshader` | **保留上游** | 贡献者原创实现，未复制原版源码 |
+| `project.godot` / `wa2.csproj` / `default_bus_layout.tres` / `main.tscn` / `assets/font.map` | **保留上游（微调）** | iOS 侧仅改 `config/name`、features、`ios` workload 等 |
+| **iOS 资源目录 `user://Wa2Res/`** | **iOS 新增** | 替代 Android 外部存储根目录；首启自动建 `IC`/`movie`/`sav` |
+| **ogv / Theora 视频方案** | **iOS 保留（未采用上游方案）** | 上游 0.2.3+ 改用 `gde_gozen`（无 iOS 库）；v0.3b 改用 `wmv_video`（无 iOS 库）。iOS 保留内置解码器播 16 个 `movie/mvXXX0.ogv` |
+| **启动校验**（13 pak + 16 ogv + `TitleMenu.SetResourcesReady`） | **iOS 新增** | Android 版无此逻辑 |
+| **iOS 导出预设 + 文件共享** | **iOS 新增** | `export_presets.cfg` `[preset.1] name="iOS"`，开启「文件」App 与 iTunes 共享 |
+| `addons/texture_fonts` | **保留但未采用（运行时无关）** | 仅编辑器生成中文字体贴图；运行时不依赖该插件 |
+| `addons/gde_gozen` / `addons/wmv_video` 视频插件 | **未采用** | 无 iOS 原生库，无法在 iOS 构建 |
+| 上游 `v0.3b` 非视频改动 | **未采用** | 维持 0.2.9 基线 |
+
+> 简言之：**游戏逻辑 / 场景 / 着色器 / 工程骨架全部沿用上游 Apache-2.0 代码**；**iOS 平台适配（资源目录、视频、启动校验、导出预设）是叠加在那些文件上的修改**；**上游依赖原生扩展的视频方案因无 iOS 库而改回 ogv**。
+
+---
+
+## 五、本次升级带来的变化（0.1.8 → 0.2.9）
 
 同步自上游的改动：
 
@@ -23,7 +101,9 @@ iOS 平台适配（与上游 Android 版的差异）：
 - **启动校验**：首次启动会自动创建资源目录，并检查 `.pak` 与视频文件是否齐全，缺失时给出提示而不是直接崩溃；
 - **导出配置**：保留 iOS 导出预设，并开启「文件」App 与 iTunes 文件共享，方便直接往应用目录里拖资源。
 
-## 当前状态
+---
+
+## 六、当前状态
 
 - 仍建议做好存档备份：修复未经更长流程的穷尽回归，极端路径仍可能存在未发现问题。
 - 旧存档兼容性：0.1.8 的存档可以被本版本读取，读档后立绘与天气状态不会恢复（旧存档里没有这些数据）。反过来，**本版本的存档不能给 0.1.8 使用**。
@@ -32,7 +112,9 @@ iOS 平台适配（与上游 Android 版的差异）：
 
 - iPad Pro 2020
 
-## 安装方法
+---
+
+## 七、安装方法
 
 由于 iOS 系统限制较多，安装和资源导入流程相对复杂。
 
@@ -40,7 +122,7 @@ iOS 平台适配（与上游 Android 版的差异）：
 
 ### 1. 安装 IPA
 
-1. 下载 `.ipa` 文件（自行构建，见「自行构建 IPA」一节）。
+1. 下载 `.ipa` 文件（自行构建，见「八、自行构建 IPA」一节）。
 2. 将 iPhone 或 iPad 连接到电脑。
 3. 在电脑上安装并打开爱思助手。
 4. 使用爱思助手对 `.ipa` 文件进行自签。
@@ -127,7 +209,9 @@ White Album 2/sav/
   <img src="https://github.com/user-attachments/assets/dd2a693b-15c1-4a3f-8884-c30b0790c83b" width="220" alt="movie 文件夹示例" />
 </p>
 
-## 自行构建 IPA
+---
+
+## 八、自行构建 IPA
 
 仓库内置了 GitHub Actions 工作流，可以在 GitHub 提供的 macOS 机器上导出**未签名 IPA**，本地不需要 Mac。
 
@@ -175,6 +259,45 @@ godot --headless --path . --export-debug "iOS" ./build/ios/wa2.ipa
 
 Godot 的 iOS 导出会生成 Xcode 工程，再用 `xcodebuild archive` 关闭签名打包即可，具体参数见 `.github/workflows/build-ios.yml`。
 
-## 版权声明
+---
 
-本项目只包含移植所需的代码与配置，不包含 White Album 2 的任何游戏资源。游戏本体资源请自行合法获取。
+## 九、版权与 Apache-2.0 声明
+
+本项目是 [WA2 Godot](https://github.com/dorakyuraduang/wa2-godot) 的 iOS 移植版（派生链见第一节），只包含移植所需的代码与配置，**不包含 White Album 2 的任何游戏资源**，游戏本体资源请自行合法获取。
+
+本仓库**不是单一协议**作品，不同文件归属不同版权与协议，详见根目录协议文件：
+
+- `LICENSE` — 仓库级复合许可声明（本文件为总纲）。
+- `LICENSES/Apache-2.0.txt` — Apache License 2.0 全文。
+- `NOTICE` — Apache-2.0 要求的署名声明（含对上游 WA2 Godot 的派生说明、Gdadfk 初始 iOS 移植署名、与 AQUAPLUS 免责声明）。
+- `PORTING_CODE.md` — 明确标注为 **Apache-2.0** 的移植代码范围，及**本 fork 的 iOS 修改清单**。
+- `THIRD_PARTY_NOTICES.md` — 第三方组件许可（texture_fonts 插件 MIT、字幕数据第三方、Godot 引擎 MIT 等）。
+- `SUBTITLE_NOTICE.md` — `assets/sub.yaml` 字幕数据的第三方版权说明。
+- `ASSET_POLICY.md` — 不纳入游戏素材的边界与贡献者规则。
+
+### 本 fork 对上游 Apache-2.0 文件的修改声明
+
+依据 **Apache License 2.0 第 4(b)、(d) 条**，本 fork 在 [`PORTING_CODE.md`](./PORTING_CODE.md) 所列 Apache-2.0 文件上叠加的 iOS 适配属于「修改（modifications）」。再分发者须：
+
+1. **标注改动**：在被修改的文件或随附说明中保留显著的修改提示（见 `PORTING_CODE.md` 的「Modifications in this iOS fork」一节列出的 iOS 专属新增/修改路径）；
+2. **保留 NOTICE**：随分发保留 [`NOTICE`](./NOTICE)；
+3. **附许可全文**：随分发提供 `LICENSES/Apache-2.0.txt`。
+
+本 fork 的 iOS 专属新增 / 修改（相对上游 Apache-2.0 文件）主要包括：
+
+- `script/Wa2EngineMain.cs` — 加入 `user://Wa2Res/` 资源目录、`RequiredPakPaths` / `ExpectedMoviePaths` / `ValidateIosMovies()` 启动校验、`VideoStreamTheora` 播 ogv 的 `PlayMovie` 分支；
+- `script/TitleMenu.cs` — 新增 iOS-only 的 `SetResourcesReady(bool)`；
+- `export_presets.cfg` — 新增 `[preset.1] name="iOS"` 及文件共享开关；
+- `project.godot` / `wa2.csproj` — iOS 相关微调；
+- 其余 `script/**`、`scene/**`、`shader/**`、`assets/ani/**` 等沿用上游，未改动或仅随同步小幅调整。
+
+### 协议摘要
+
+| 组成 | 协议 | 说明 |
+|---|---|---|
+| 移植代码（`PORTING_CODE.md` 列出的路径） | **Apache-2.0** | 贡献者原创的资源读取、运行时逻辑、着色器、场景与工程集成 |
+| `addons/texture_fonts` | **MIT** | 独立的 Godot 编辑器插件（© 2021-2024 Micky / Laila L.） |
+| `assets/sub.yaml` 字幕数据 | **第三方** | 含萌娘百科 / CK-GAL汉化组内容，非 Apache-2.0 覆盖，见 `SUBTITLE_NOTICE.md` |
+| White Album 2 游戏素材 | **未授权** | 不随仓库分发，AQUAPLUS 保留全部权利 |
+
+> 本项目为非官方作品，与 AQUAPLUS 无关、未获其授权或背书。

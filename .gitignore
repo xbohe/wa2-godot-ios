@@ -38,3 +38,8 @@ __pycache__/
 # 原始游戏包(本地，不入库)
 *.rar
 *.apk
+
+# LiveContainer Tweak 构建产物（源码在 addons/tweaks/，dylib 由 CI 出）
+tweaks-build/
+addons/tweaks/**/*.dylib
+_dist/

@@ -39,7 +39,5 @@ __pycache__/
 *.rar
 *.apk
 
-# LiveContainer Tweak 构建产物（源码在 addons/tweaks/，dylib 由 CI 出）
-tweaks-build/
-addons/tweaks/**/*.dylib
+# 本地构建/发布产物（IPA、发布说明等，非仓库内容）
 _dist/

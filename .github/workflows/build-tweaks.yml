@@ -28,7 +28,7 @@ jobs:
             echo "== build $name from $src =="
             clang -dynamiclib -arch arm64 -target arm64-apple-ios15.0 \
               -isysroot "$SDK" -fobjc-arc \
-              -framework Foundation -framework UIKit -O2 \
+              -framework Foundation -framework UIKit -framework QuartzCore -O2 \
               "$src" -o "tweaks-build/$name.dylib"
             codesign -s - --force "tweaks-build/$name.dylib"
             file "tweaks-build/$name.dylib"

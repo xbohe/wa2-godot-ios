@@ -27,7 +27,7 @@
 SDK=$(xcrun --sdk iphoneos --show-sdk-path)
 clang -dynamiclib -arch arm64 -target arm64-apple-ios15.0 \
   -isysroot "$SDK" -fobjc-arc \
-  -framework Foundation -framework UIKit -O2 \
+  -framework Foundation -framework UIKit -framework QuartzCore -O2 \
   sysinfo_overlay.m -o sysinfo_overlay.dylib
 codesign -s - --force sysinfo_overlay.dylib
 ```
